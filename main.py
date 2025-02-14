@@ -31,7 +31,7 @@ def visualize_with_pygame():
         print(f"Error loading tilemap: {e}")
         return
 
-    known_tile_ids = {0, 23, 2, 14, 30, 10, 28}
+    known_tile_ids = {0, 23, 2, 14, 30, 10, 28, 4, 13}
     all_tile_ids = {tile for row in data for tile in row if isinstance(tile, int)}
     unknown_tile_ids = all_tile_ids - known_tile_ids
     if unknown_tile_ids:
@@ -57,16 +57,30 @@ def visualize_with_pygame():
                 color = (170, 170, 170)  # bedrock (#aaaaaa)
             elif tile == 2:
                 color = (186, 127, 46)   # tile 2 is #ba7f2e
+            elif tile == 3:
+                color = (119,147,37)     # tile 3 is #779325
+            elif tile == 4:
+                color = (0, 0, 0)        # fog #000000
             elif tile == 10:
                 color = (91, 206, 34)    # tile 10 is #5bce22
             elif tile == 14:
                 color = (175, 0, 224)    # tile 14 is #af00e0
+            elif tile == 13:
+                color = (255, 102, 0)    # tile 13 is #ff6600
             elif tile == 30:
                 color = (224, 211, 184)  # tile 30 is #e0d3b8
             elif tile == 28:
                 color = (163, 0, 0)      # tile 28 is #a30000
+            elif tile == 103:
+                color = (112, 168, 236)  # tile 103 is #70a8ec
+            elif tile == 6:
+                color = (112, 168, 236)  # tile 6 is #70a8ec
+            elif tile == 104:
+                color = (210, 154, 76)  # tile 104 is #d29a4c
+            elif tile == 101:
+                color = (218, 171, 105)  # tile 101 is #daab69
             else:
-                color = (0, 0, 0)        # default color (black)
+                color = (255, 192, 203)  # default color (pink)
             rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
             pygame.draw.rect(tilemap_surface, color, rect)
 
@@ -92,18 +106,18 @@ def visualize_with_pygame():
 
         screen.blit(tilemap_surface, (0, 0), area=pygame.Rect(camera_x, camera_y, window_width, window_height))
         
-        #mouse_x, mouse_y = pygame.mouse.get_pos()
-        #world_x = camera_x + mouse_x
-        #world_y = camera_y + mouse_y
-        #tile_x = world_x // tile_size
-        #tile_y = world_y // tile_size
-        #if 0 <= tile_y < rows and 0 <= tile_x < cols:
-            #tile_id = data[tile_y][tile_x]
-            #hover_rect = pygame.Rect(tile_x * tile_size - camera_x, tile_y * tile_size - camera_y, tile_size, tile_size)
-            #pygame.draw.rect(screen, (255, 0, 0), hover_rect, 2)
-            #font = pygame.font.SysFont(None, 24)
-            #text_surface = font.render(f"Tile: {tile_id}", True, (255, 255, 255))
-            #screen.blit(text_surface, (mouse_x + 5, mouse_y + 5))
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        world_x = camera_x + mouse_x
+        world_y = camera_y + mouse_y
+        tile_x = world_x // tile_size
+        tile_y = world_y // tile_size
+        if 0 <= tile_y < rows and 0 <= tile_x < cols:
+            tile_id = data[tile_y][tile_x]
+            hover_rect = pygame.Rect(tile_x * tile_size - camera_x, tile_y * tile_size - camera_y, tile_size, tile_size)
+            pygame.draw.rect(screen, (255, 0, 0), hover_rect, 2)
+            font = pygame.font.SysFont(None, 24)
+            text_surface = font.render(f"Tile: {tile_id}", True, (255, 255, 255))
+            screen.blit(text_surface, (mouse_x + 5, mouse_y + 5))
         
         pygame.display.flip()
         clock.tick(60)
