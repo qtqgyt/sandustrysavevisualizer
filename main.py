@@ -5,7 +5,7 @@ environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 import sys
 
-def visualize_with_pygame():
+def render():
     json_path = os.path.join(os.path.dirname(__file__), "autosave.save")
     try:
         with open(json_path, 'r') as file:
@@ -18,6 +18,12 @@ def visualize_with_pygame():
                 objects.append(obj)
             except Exception as ee:
                 print("Error parsing a JSON segment:", ee)
+        # Extract gold, fluxite, and artifacts from the first JSON segment at path resources.gold, fluxite, artifacts
+        resources = objects[0].get("resources", {}) if objects else {}
+        gold = resources.get("gold", 0)
+        fluxite = resources.get("fluxite", 0)
+        artifacts = resources.get("artifacts", 0)
+
         data = None
         for obj in objects:
             if "world" in obj and "matrix" in obj["world"]:
@@ -33,12 +39,6 @@ def visualize_with_pygame():
         print(f"Error loading tilemap: {e}")
         return
 
-    known_tile_ids = {0, 23, 2, 14, 30, 10, 28, 4, 13}
-    all_tile_ids = {tile for row in data for tile in row if isinstance(tile, int)}
-    unknown_tile_ids = all_tile_ids - known_tile_ids
-    if unknown_tile_ids:
-        print("Unknown tile ids in save file:", unknown_tile_ids)
-
     rows = len(data)
     cols = max(len(row) for row in data)
     tile_size = min(32, 1280 // cols, 1280 // rows)
@@ -53,6 +53,9 @@ def visualize_with_pygame():
     tilemap_surface = pygame.Surface((tilemap_width, tilemap_height))
     for y, row in enumerate(data):
         for x, tile in enumerate(row):
+            # If tile is an array, use its first element.
+            if isinstance(tile, list):
+                tile = tile[0]
             if tile == 0:
                 color = (0, 0, 0)        # air (black)
             elif tile == 23:
@@ -78,9 +81,32 @@ def visualize_with_pygame():
             elif tile == 6:
                 color = (112, 168, 236)  # tile 6 is #70a8ec
             elif tile == 104:
-                color = (210, 154, 76)  # tile 104 is #d29a4c
+                color = (210, 154, 76)   # tile 104 is #d29a4c
             elif tile == 101:
                 color = (218, 171, 105)  # tile 101 is #daab69
+            elif tile == 9:
+                color = (115, 177, 67)   # tile 9 is #73b143
+            elif tile == 7:
+                color = (238, 246, 246)  # tile 7 is #eef6f6
+            elif tile == 112:
+                color = (238, 246, 246)  # tile 7 is #eef6f6
+            elif tile == 25:
+                color = (102, 204, 255)  # tile 25 is #66ccff
+            elif tile == 105:
+                color = (163, 0, 0)      # tile 28 is #a30000
+            elif tile == 110:
+                color = (175, 175, 175)  # tile 110 is #afafaf
+            elif tile == 8:
+                color = (255, 128, 0)    # tile 8 is #ff8000
+            elif tile == 116:
+                color = (150, 186, 46)   # tile 116 is #96ba2e
+            elif tile == 15:
+                color = (217, 157, 14)   # tile 15 is #d99d0e
+            elif tile == 118:
+                color = (139, 105, 218)  # tile 118 is #8b69da
+            elif tile == 108:
+                color = (96, 36, 108)    # tile 108 is #60246c
+# add more factory tiles later
             else:
                 color = (255, 192, 203)  # default color (pink)
             rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
@@ -90,6 +116,9 @@ def visualize_with_pygame():
     scroll_speed = 10
     clock = pygame.time.Clock()
     running = True
+
+    # Pre-create a font for HUD text
+    font = pygame.font.SysFont(None, 24)
 
     while running:
         pygame.event.pump()
@@ -118,11 +147,21 @@ def visualize_with_pygame():
         tile_y = world_y // tile_size
         if 0 <= tile_y < rows and 0 <= tile_x < cols:
             tile_id = data[tile_y][tile_x]
+            # If tile_id is an array, use its first element.
+            if isinstance(tile_id, list):
+                tile_id = tile_id[0]
             hover_rect = pygame.Rect(tile_x * tile_size - camera_x, tile_y * tile_size - camera_y, tile_size, tile_size)
             pygame.draw.rect(screen, (255, 0, 0), hover_rect, 2)
-            font = pygame.font.SysFont(None, 24)
             text_surface = font.render(f"Tile: {tile_id}", True, (255, 255, 255))
             screen.blit(text_surface, (mouse_x + 5, mouse_y + 5))
+        
+        # Render gold, fluxite, and artifacts amounts on HUD
+        gold_text = font.render(f"Gold: {gold}", True, (255, 215, 0))
+        fluxite_text = font.render(f"Fluxite: {fluxite}", True, (175, 0, 224))
+        artifacts_text = font.render(f"Artifacts: {artifacts}/2", True, (45, 197, 214))
+        screen.blit(gold_text, (10, 10))
+        screen.blit(fluxite_text, (10, 40))
+        screen.blit(artifacts_text, (10, 70))
         
         pygame.display.flip()
         clock.tick(60)
@@ -131,4 +170,4 @@ def visualize_with_pygame():
     sys.exit()
 
 if __name__ == '__main__':
-    visualize_with_pygame()
+    render()
