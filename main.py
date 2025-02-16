@@ -8,7 +8,7 @@ import sys
 def render():
     json_path = os.path.join(os.path.dirname(__file__), "autosave.save")
     try:
-        with open(json_path, 'r') as file:
+        with open(json_path, 'r', encoding="utf-8", errors="replace") as file:
             contents = file.read()
         json_strings = [s for s in contents.splitlines() if s.strip()]
         objects = []
