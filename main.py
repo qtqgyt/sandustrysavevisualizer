@@ -10,7 +10,7 @@ default_color = (255, 192, 203)  # default color (pink)
 
 tile_colors: dict[int, tuple[int, int, int]] = {
     0: (0, 0, 0),  # Air (black)
-    2: (186, 127, 46),  # tile 2 is #ba7f2e
+    2: (186, 127, 46),  # Soil is #ba7f2e
     3: (119, 147, 37),  # Sporemound is #779325
     4: (0, 0, 0),  # Fog (black)
     5: (255, 0, 0),  # Artifact Number Block is #ff0000
@@ -19,7 +19,7 @@ tile_colors: dict[int, tuple[int, int, int]] = {
     8: (255, 128, 0),  # Sealing Block? is #ff8000
     9: (115, 177, 67),  # Grass is #73b143
     10: (91, 206, 34),  # Moss is #5bce22
-    13: (255, 102, 0),  # tile 13 is #ff6600
+    13: (255, 102, 0),  # Undiscovered Lava is #ff6600
     14: (175, 0, 224),  # Fluxite is #af00e0
     15: (217, 157, 14),  # Block is #d99d0e (factory tiles)
     16: (217, 157, 14),  # tile 16 is #d99d0e (factory tiles)
@@ -33,7 +33,7 @@ tile_colors: dict[int, tuple[int, int, int]] = {
     24: (217, 157, 14),  # Kinetic Slag Press (factory tiles)
     25: (102, 204, 255),  # Ice is #66ccff
     28: (163, 0, 0),  # Redsoil is #a30000
-    29: (103, 27, 0),  # tile 29 is #671b00
+    29: (103, 27, 0),  # Scoria is #671b00
     30: (224, 211, 184),  # Crackstone is #e0d3b8
     101: (218, 171, 105),  # Sand is #daab69
     103: (112, 168, 236),  # Water is #70a8ec
@@ -53,6 +53,52 @@ tile_colors: dict[int, tuple[int, int, int]] = {
     118: (139, 105, 218),  # Amethelis is #8b69da
     119: (255, 174, 11),  # Lava is #ffae0b
     120: (117, 10, 0),  # Cinder #750a00
+}
+tile_names: dict[int, str] = {
+    0: "Air",
+    2: "Soil",
+    3: "Sporemound",
+    4: "Fog",
+    5: "Artifact/Cat Block",
+    6: "Undiscovered Water",
+    7: "Frostbed",
+    8: "Sealing Block",
+    9: "Grass",
+    10: "Moss",
+    13: "Undiscovered Lava",
+    14: "Fluxite",
+    15: "Factory Tile",
+    16: "Factory Tile",
+    17: "Factory Tile",
+    18: "Factory Tile",
+    19: "Factory Tile",
+    20: "Factory Tile",
+    21: "Factory Tile",
+    22: "Factory Tile",
+    23: "Bedrock",
+    24: "Kinetic Slag Press",
+    25: "Ice",
+    28: "Redsoil",
+    29: "Scoria",
+    30: "Crackstone",
+    101: "Sand",
+    103: "Water",
+    104: "Wet Sand",
+    105: "Tile 105",
+    106: "Slag",
+    107: "Gold",
+    108: "Voidbloom",
+    110: "Steam",
+    111: "Fire",
+    112: "Snow",
+    113: "Flame",
+    114: "Burnt Slag",
+    115: "Spore",
+    116: "Wet Spore",
+    117: "Seed",
+    118: "Amethelis",
+    119: "Lava",
+    120: "Cinder",
 }
 
 
@@ -156,7 +202,11 @@ def render():
                 tile_id = tile_id[0]
             hover_rect = pygame.Rect(tile_x * tile_size - camera_x, tile_y * tile_size - camera_y, tile_size, tile_size)
             pygame.draw.rect(screen, (255, 0, 0), hover_rect, 2)
-            text_surface = font.render(f"Tile: {tile_id}", True, (255, 255, 255))
+            if isinstance(tile_id, int):
+                tile_name = tile_names.get(tile_id, "Unknown")
+            else:
+                tile_name = "Unknown"
+            text_surface = font.render(f"Tile: {tile_id} - {tile_name}", True, (255, 255, 255))
             screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
         draw_hud(screen, artifacts, fluxite, font, gold)
 
