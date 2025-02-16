@@ -14,11 +14,15 @@ class TileInfo:
         self.hex_code = hex_code
 
 
-default_tile = TileInfo((255, 192, 203), "Unknown", "#FFC0CB")
+default_tile = TileInfo((255, 192, 203), "Undefined", "#FFC0CB")
+
+tile_colors: dict[int, TileInfo] = {
+    0: TileInfo((0, 0, 0), "air", "#000000")
+}
 
 tile_colors: dict[int, TileInfo] = {
     0: TileInfo((0, 0, 0), "air", "#000000"),
-    2: TileInfo((186, 127, 46), "Soil", "#ba7f2e"),
+    2: TileInfo((186, 127, 46), "tile 2", "#ba7f2e"),
     3: TileInfo((119, 147, 37), "Sporemound", "#779325"),
     4: TileInfo((0, 0, 0), "Fog", "#000000"),
     5: TileInfo((255, 0, 0), "Artifact Number Block", "#ff0000"),
@@ -62,58 +66,12 @@ tile_colors: dict[int, TileInfo] = {
     119: TileInfo((255, 174, 11), "Lava", "#ffae0b"),
     120: TileInfo((117, 10, 0), "Cinder", "#750a00")
 }
-tile_names: dict[int, str] = {
-    0: "Air",
-    2: "Soil",
-    3: "Sporemound",
-    4: "Fog",
-    5: "Artifact/Cat Block",
-    6: "Undiscovered Water",
-    7: "Frostbed",
-    8: "Sealing Block",
-    9: "Grass",
-    10: "Moss",
-    13: "Undiscovered Lava",
-    14: "Fluxite",
-    15: "Factory Tile",
-    16: "Factory Tile",
-    17: "Factory Tile",
-    18: "Factory Tile",
-    19: "Factory Tile",
-    20: "Factory Tile",
-    21: "Factory Tile",
-    22: "Factory Tile",
-    23: "Bedrock",
-    24: "Kinetic Slag Press",
-    25: "Ice",
-    28: "Redsoil",
-    29: "Scoria",
-    30: "Crackstone",
-    101: "Sand",
-    103: "Water",
-    104: "Wet Sand",
-    105: "Tile 105",
-    106: "Slag",
-    107: "Gold",
-    108: "Voidbloom",
-    110: "Steam",
-    111: "Fire",
-    112: "Snow",
-    113: "Flame",
-    114: "Burnt Slag",
-    115: "Spore",
-    116: "Wet Spore",
-    117: "Seed",
-    118: "Amethelis",
-    119: "Lava",
-    120: "Cinder",
-}
 
 
 def render():
     json_path = os.path.join(os.path.dirname(__file__), "autosave.save")
     try:
-        with open(json_path, 'r', encoding="utf-8", errors="replace") as file:
+        with open(json_path, 'r') as file:
             contents = file.read()
         json_strings = [s for s in contents.splitlines() if s.strip()]
         objects = []
@@ -211,7 +169,7 @@ def render():
             hover_rect = pygame.Rect(tile_x * tile_size - camera_x, tile_y * tile_size - camera_y, tile_size, tile_size)
             pygame.draw.rect(screen, (255, 0, 0), hover_rect, 2)
             tile_info = tile_colors.get(tile_id, default_tile) if isinstance(tile_id, int) else default_tile
-            text_surface = font.render(f"Tile: {tile_id} - {tile_info.name}", True, (255, 255, 255))
+            text_surface = font.render(f"{tile_info.name} ({tile_id})", True, (255, 255, 255))
             screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
         draw_hud(screen, artifacts, fluxite, font, gold)
 
