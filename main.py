@@ -100,7 +100,7 @@ def render():
                 color = (255, 128, 0)    # tile 8 is #ff8000
             elif tile == 116:
                 color = (150, 186, 46)   # tile 116 is #96ba2e
-            elif tile == 15:
+            elif tile in [15,16,17,18,19,20,21,22,24]: #factory tiles
                 color = (217, 157, 14)   # tile 15 is #d99d0e
             elif tile == 118:
                 color = (139, 105, 218)  # tile 118 is #8b69da
@@ -116,6 +116,8 @@ def render():
                 color = (255, 174, 11)   # tile 119 is #ffae0b
             elif tile == 111:
                 color = (255, 174, 11)   # tile 111 is #ffae0b
+            elif tile == 107:
+                color = (250, 250, 2)    # tile 107 is #fafa02
 # add more factory tiles later
             else:
                 color = (255, 192, 203)  # default color (pink)
