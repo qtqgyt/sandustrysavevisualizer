@@ -1,9 +1,6 @@
 name: Build release
 
-on:
-  push:
-    tags:
-      - "v*.*.*"
+on: [push]
 
 jobs:
   build-linux:
@@ -27,6 +24,7 @@ jobs:
         with:
           name: Linux
           path: dist/main
+          compression-level: 9
 
   build-windows:
     runs-on: windows-latest
