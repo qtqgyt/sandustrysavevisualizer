@@ -6,6 +6,9 @@ from tkinter import filedialog
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
 
+zoom_level = 1.0
+
+base_zoom_multiplier = zoom_level
 
 class TileInfo:
     def __init__(self, color: tuple[int, int, int], name: str, hex_code: str):
@@ -64,7 +67,7 @@ tile_colors: dict[int, TileInfo] = {
 }
 
 def render():
-    # Open file dialog
+    # Open file dialog to choose 
     pygame.init()
     pygame.display.set_icon(create_magnifying_glass_icon())
     pygame.mouse.set_cursor(create_cursor())
@@ -109,13 +112,16 @@ def render():
         player_data = objects[1].get("player", {}) if len(objects) > 1 else {}
         player_x = player_data.get("x", 0) / 4
         player_y = player_data.get("y", 0) / 4
+        player_x *= base_zoom_multiplier
+        player_y *= base_zoom_multiplier
     except Exception as e:
         print(f"Error loading tilemap: {e}")
         return
 
     rows = len(data)
     cols = max(len(row) for row in data)
-    tile_size = max(min(32, 1280 // cols, 1280 // rows), 1)
+    base_tile_size = max(min(32, 1280 // cols, 1280 // rows), 1)
+    tile_size = int(base_tile_size * base_zoom_multiplier)
     tilemap_width = cols * tile_size
     tilemap_height = rows * tile_size
 
