@@ -1,0 +1,21 @@
+name: Build release
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout a specific file
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            main.py
+          sparse-checkout-cone-mode: false
+      
+      - name: Install pyinstaller
+        run: |
+          pip install pyinstaller
+          pyinstaller --onefile main.py
+          
