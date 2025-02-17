@@ -186,7 +186,9 @@ def render():
             text_surface = font.render(f"Tile: {tile_id} - {tile_info.name}", True, (255, 255, 255))
             screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
         draw_hud(screen, artifacts, fluxite, font, gold)
-
+        
+        draw_hotbar(screen, font)
+        
         pygame.display.flip()
         clock.tick(60)
 
@@ -207,6 +209,25 @@ def draw_hud(screen, artifacts, fluxite, font, gold):
     screen.blit(gold_text, (10, 10))
     screen.blit(fluxite_text, (10, 40))
     screen.blit(artifacts_text, (10, 70))
+
+
+def draw_hotbar(screen, font):
+    hotbar_height = 60
+    screen_width = screen.get_width()
+    hotbar_y = screen.get_height() - hotbar_height
+    pygame.draw.rect(screen, (50, 50, 50), (0, hotbar_y, screen_width, hotbar_height)) # attempt to make transparent at some point
+    slot_width = 60
+    margin = 10
+    total_slots = 9
+    total_width = total_slots * slot_width + (total_slots + 1) * margin
+    start_x = (screen_width - total_width) // 2
+    for idx in range(total_slots):
+        slot_x = start_x + margin + idx * (slot_width + margin)
+        pygame.draw.rect(screen, (100, 100, 100), (slot_x, hotbar_y + margin, slot_width, slot_width), 2)
+        text_surface = font.render(str(idx + 1), True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=(slot_x + slot_width // 2,
+        hotbar_y + margin + slot_width // 2))
+        screen.blit(text_surface, text_rect)
 
 
 def create_cursor() -> pygame.Cursor:
