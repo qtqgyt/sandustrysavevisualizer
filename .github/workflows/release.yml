@@ -1,6 +1,9 @@
 name: Build release
 
-on: [push]
+on:
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   build-linux:
@@ -19,7 +22,31 @@ jobs:
           pip install pyinstaller
           pyinstaller --onefile main.py
 
-      - name: Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.6.0
         with:
-          files: dist/main
+          name: Linux
+          path: dist/main
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout a specific file
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            main.py
+          sparse-checkout-cone-mode: false
+
+      - name: Install pyinstaller
+        run: |
+          pip install pyinstaller
+          pyinstaller --onefile main.py
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: Linux
+          path: dist/main
+          compression-level: 9
