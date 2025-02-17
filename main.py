@@ -65,6 +65,12 @@ tile_colors: dict[int, TileInfo] = {
 
 def render():
     # Open file dialog to choose save file
+    pygame.init()
+    pygame.display.set_icon(create_magnifying_glass_icon())
+    pygame.mouse.set_cursor(create_cursor())
+    window_width, window_height = 800, 600
+    screen = pygame.display.set_mode((window_width, window_height))
+    pygame.display.set_caption("Sandustry Save Visualizer")
     root = tk.Tk()
     root.withdraw()  # Hide the main window
     json_path = filedialog.askopenfilename(title="Select save file", filetypes=[("Save Files", "*.save")])
@@ -114,13 +120,6 @@ def render():
     tilemap_height = rows * tile_size
 
     print("If the window doesn't show up, check your taskbar!\nClick on the window, then use WASD or arrow keys to \"move\"\nContact @qw000erty_71712 on discord for help, or open a github issue.")
-
-    pygame.init()
-    pygame.display.set_icon(create_magnifying_glass_icon())
-    pygame.mouse.set_cursor(create_cursor())
-    window_width, window_height = 800, 600
-    screen = pygame.display.set_mode((window_width, window_height))
-    pygame.display.set_caption("Sandustry Save Visualizer")
 
     tilemap_surface = pygame.Surface((tilemap_width, tilemap_height))
     for y, row in enumerate(data):
