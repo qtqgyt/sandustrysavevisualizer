@@ -14,5 +14,4 @@
    - Go to the directory that contains main.py in a shell such as CMD
    - Make sure you have python installed, if it says run python without arguments... then just run ``python``. Then proceed to the next steps.
    - Run ``pip install -r requirements.txt``
-   - Copy ``%APPDATA%\sandustrydemo\saves\autosave.save`` to the script directory.
-   - Run the script!
+   - Run the script with ``python main.py``
