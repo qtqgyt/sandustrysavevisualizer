@@ -125,7 +125,7 @@ def render():
     tilemap_width = cols * tile_size
     tilemap_height = rows * tile_size
 
-    print("If the window doesn't show up, check your taskbar!\nClick on the window, then use WASD or arrow keys to \"move\"\nContact @qw000erty_71712 on discord for help, or open a github issue.")
+    print("Contact @ qw000erty_71712 on discord for help.")
 
     tilemap_surface = pygame.Surface((tilemap_width, tilemap_height))
     for y, row in enumerate(data):
