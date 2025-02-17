@@ -16,7 +16,7 @@ jobs:
 
       - name: Install pyinstaller
         run: |
-          pip install pyinstaller
+          pip install pyinstaller pygame
           pyinstaller --onefile main.py
 
       - name: Upload a Build Artifact
@@ -39,7 +39,7 @@ jobs:
 
       - name: Install pyinstaller
         run: |
-          pip install pyinstaller
+          pip install pyinstaller pygame
           pyinstaller --onefile main.py
 
       - name: Upload a Build Artifact
