@@ -1,4 +1,5 @@
 # sandustrysavevisualizer
+### COMPATIBLE WITH V0.0.5-HOTFIX7 SAVE FORMAT
 #### *This assumes that you know at least a bit about python*
 ## Setup
 1. If you don't want to go down the route of manual setup,
