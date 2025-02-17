@@ -18,4 +18,11 @@ jobs:
         run: |
           pip install pyinstaller
           pyinstaller --onefile main.py
-          
+          ls dist
+
+      - name: GitHub Releases
+        uses: fnkr/github-action-ghr@v1.3
+        env:
+          GHR_COMPRESS: xz
+          GHR_PATH: dist/
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
