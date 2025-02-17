@@ -64,7 +64,7 @@ tile_colors: dict[int, TileInfo] = {
 }
 
 def render():
-    # Open file dialog to choose save file
+    # Open file dialog
     pygame.init()
     pygame.display.set_icon(create_magnifying_glass_icon())
     pygame.mouse.set_cursor(create_cursor())
