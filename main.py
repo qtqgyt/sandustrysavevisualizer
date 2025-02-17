@@ -1,10 +1,10 @@
 import json
-import os
 from os import environ
-
+import sys
+import tkinter as tk
+from tkinter import filedialog
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
-import sys
 
 default_color = (255, 192, 203)  # default color (pink)
 
@@ -103,7 +103,14 @@ tile_names: dict[int, str] = {
 
 
 def render():
-    json_path = os.path.join(os.path.dirname(__file__), "autosave.save")
+    # Open file dialog to choose save file
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+    json_path = filedialog.askopenfilename(title="Select save file", filetypes=[("Save Files", "*.save")])
+    root.destroy()
+    if not json_path:
+        print("No file selected.")
+        return
     try:
         with open(json_path, 'r', encoding="utf-8", errors="replace") as file:
             contents = file.read()
@@ -132,6 +139,9 @@ def render():
         if not (isinstance(data, list) and all(isinstance(row, list) for row in data)):
             print("world.matrix is not a valid tilemap.")
             return
+        player_data = objects[1].get("player", {}) if len(objects) > 1 else {}
+        player_x = player_data.get("x", 0) / 4
+        player_y = player_data.get("y", 0) / 4
     except Exception as e:
         print(f"Error loading tilemap: {e}")
         return
@@ -141,6 +151,8 @@ def render():
     tile_size = max(min(32, 1280 // cols, 1280 // rows), 1)
     tilemap_width = cols * tile_size
     tilemap_height = rows * tile_size
+
+    print("If the window doesn't show up, check your taskbar!\nClick on the window, then use WASD or arrow keys to \"move\"\nContact @qw000erty_71712 on discord for help, or open a github issue.")
 
     pygame.init()
     pygame.display.set_icon(create_magnifying_glass_icon())
@@ -190,6 +202,8 @@ def render():
 
         screen.fill((0, 0, 0))
         screen.blit(tilemap_surface, (0, 0), area=pygame.Rect(camera_x, camera_y, window_width, window_height))
+        # Draw player marker: green circle indicating player's position
+        pygame.draw.circle(screen, (0, 255, 0), (player_x - camera_x, player_y - camera_y), max(tile_size // 2, 5))
         mouse_x, mouse_y = pygame.mouse.get_pos()
         world_x = camera_x + mouse_x
         world_y = camera_y + mouse_y
