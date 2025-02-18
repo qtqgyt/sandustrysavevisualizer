@@ -39,7 +39,7 @@ jobs:
             rm -rf ghr_latest.tar.gz ghr_v${LATEST_VERSION}_linux_amd64
       - run:
           name: "Release"
-          command: "ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c $(date +%s) -delete ${VERSION} ./artifacts/"
+          command: "ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -target main ${VERSION} /home/circleci/project/dist/main"
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
