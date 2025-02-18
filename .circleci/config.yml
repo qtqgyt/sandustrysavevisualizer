@@ -32,10 +32,11 @@ jobs:
       - run:
           name: Install latest ghr
           command: |
-            wget https://github.com/tcnksm/ghr/releases/latest/download/ghr_linux_amd64.tar.gz -O ghr_latest.tar.gz
+            LATEST_VERSION=$(curl -sSL https://api.github.com/repos/tcnksm/ghr/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+            wget https://github.com/tcnksm/ghr/releases/download/v${LATEST_VERSION}/ghr_v${LATEST_VERSION}_linux_amd64.tar.gz -O ghr_latest.tar.gz
             tar -xzf ghr_latest.tar.gz
-            sudo mv ghr*/ghr /usr/local/bin/
-            rm -rf ghr_latest.tar.gz ghr*
+            sudo mv ghr_v${LATEST_VERSION}_linux_amd64/ghr /usr/local/bin/
+            rm -rf ghr_latest.tar.gz ghr_v${LATEST_VERSION}_linux_amd64
       - run:
           name: "Release"
           command: "ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/"
