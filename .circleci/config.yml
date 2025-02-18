@@ -29,8 +29,16 @@ jobs:
       - run:
           name: "Build application"
           command: "pyinstaller --onefile main.py && pwd"
-      - store_artifacts:
-          path: /home/circleci/project/dist
+      - run:
+          name: Install latest ghr
+          command: |
+            wget https://github.com/tcnksm/ghr/releases/latest/download/ghr_linux_amd64.tar.gz -O ghr_latest.tar.gz
+            tar -xzf ghr_latest.tar.gz
+            sudo mv ghr*/ghr /usr/local/bin/
+            rm -rf ghr_latest.tar.gz ghr*
+      - run:
+          name: "Release"
+          command: "ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/"
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
