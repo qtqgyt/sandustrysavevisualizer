@@ -89,13 +89,11 @@ jobs:
             $releaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/$env:CIRCLE_PROJECT_USERNAME/$env:CIRCLE_PROJECT_REPONAME/releases/latest"
             $releaseTag = $releaseData.tag_name
             Write-Host "Latest release tag: $releaseTag"
-            # Append the Windows artifact to the existing release.
-            C:\ghr\ghr.exe --append -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $releaseTag "dist\main.exe"
+            # Append the Windows artifact (main.exe) to the existing release.
+            C:\ghr\ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $releaseTag "dist\main.exe"
 
 workflows:
   release-workflow:
     jobs:
       - build-linux
-      - build-windows:
-          requires:
-            - build-linux
+      - build-windows
