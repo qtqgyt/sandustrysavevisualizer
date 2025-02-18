@@ -34,18 +34,14 @@ jobs:
       - run:
           name: "Install latest ghr"
           command: |
-            # Get the latest version of GHR
-            $LATEST_VERSION = (Invoke-WebRequest -Uri "https://api.github.com/repos/tcnksm/ghr/releases/latest" | ConvertFrom-Json).tag_name
-            # Download the GHR Windows zip
-            Invoke-WebRequest -Uri "https://github.com/tcnksm/ghr/releases/download/$LATEST_VERSION/ghr_windows_amd64.zip" -OutFile "ghr_latest.zip"
-            # Extract the zip file
-            Expand-Archive -Path "ghr_latest.zip" -DestinationPath "C:\ghr"
-            # Move ghr to a directory in PATH
-            Move-Item -Path "C:\ghr\ghr.exe" -Destination "C:\ghr\ghr.exe"
-            $env:PATH += ";C:\ghr"
+            LATEST_VERSION=$(curl -sSL https://api.github.com/repos/tcnksm/ghr/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+            wget https://github.com/tcnksm/ghr/releases/download/v${LATEST_VERSION}/ghr_v${LATEST_VERSION}_linux_amd64.tar.gz -O ghr_latest.tar.gz
+            tar -xzf ghr_latest.tar.gz
+            sudo mv ghr_v${LATEST_VERSION}_linux_amd64/ghr /usr/local/bin/
+            rm -rf ghr_latest.tar.gz ghr_v${LATEST_VERSION}_linux_amd64
       - run:
           name: "Release"
-          command: "C:/ghr/ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $date $distPath"
+          command: "ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} $(date +%s) /home/circleci/project/dist/main"
         
   build-windows:
     executor:
@@ -59,7 +55,17 @@ jobs:
             name: "Build application"
             command: |
                 pyinstaller --onefile main.py
-                Get-Location
+                # Get the latest version of GHR
+                $LATEST_VERSION = (Invoke-WebRequest -Uri "https://api.github.com/repos/tcnksm/ghr/releases/latest" | ConvertFrom-Json).tag_name
+                # Download the GHR Windows zip
+                Invoke-WebRequest -Uri "https://github.com/tcnksm/ghr/releases/download/$LATEST_VERSION/ghr_windows_amd64.zip" -OutFile "ghr_latest.zip"
+                # Extract the zip file
+                Expand-Archive -Path "ghr_latest.zip" -DestinationPath "C:\ghr"
+                # Move ghr to a directory in PATH
+                Move-Item -Path "C:\ghr\ghr.exe" -Destination "C:\ghr\ghr.exe"
+                $env:PATH += ";C:\ghr"
+
+                C:/ghr/ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $date $distPath
             
 
 # Orchestrate jobs using workflows
