@@ -45,7 +45,7 @@ jobs:
             $env:PATH += ";C:\ghr"
       - run:
           name: "Release"
-          command: "'C:\ghr\ghr.exe' -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $date $distPath"
+          command: "C:/ghr/ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $date $distPath"
         
   build-windows:
     executor:
