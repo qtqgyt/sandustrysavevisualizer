@@ -36,13 +36,37 @@ jobs:
             rm -rf ghr_0.17.0.tar.gz ghr_v0.17.0_linux_amd64
 
       - run:
+          name: "Determine new release tag"
+          command: |
+            # Query the latest release tag from GitHub.
+            CURRENT_TAG=$(curl -sSL https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+            if [ -z "$CURRENT_TAG" ] || [ "$CURRENT_TAG" = "null" ]; then
+              NEW_TAG=1
+            else
+              # Remove a leading "v" if present, then increment.
+              CLEAN_TAG=$(echo $CURRENT_TAG | sed 's/^v//')
+              NEW_TAG=$((CLEAN_TAG + 1))
+            fi
+            echo "New release tag: $NEW_TAG"
+            echo $NEW_TAG > new_release_tag.txt
+
+      - run:
           name: "Release Linux Build with GHR"
-          command: "ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} latest /home/circleci/project/dist/main"
+          command: |
+            NEW_TAG=$(cat new_release_tag.txt)
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} $NEW_TAG /home/circleci/project/dist/main
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - new_release_tag.txt
 
   build-windows:
     executor:
       name: win/default
     steps:
+      - attach_workspace:
+          at: .
       - checkout
 
       - run:
@@ -58,14 +82,14 @@ jobs:
             pyinstaller --onefile main.py
 
       - run:
-          name: "Install GHR v0.17.0 and Release Windows Build"
+          name: "Install GHR v0.17.0 and Append Windows Build"
           shell: powershell.exe
           command: |
-            # Download GHR v0.17.0 Windows zip using curl.exe
+            # Download GHR v0.17.0 for Windows using curl.exe
             curl.exe -L "https://github.com/tcnksm/ghr/releases/download/v0.17.0/ghr_v0.17.0_windows_amd64.zip" -o "ghr_0.17.0.zip"
-            # Extract the zip archive
+            # Extract the archive
             Expand-Archive -Path "ghr_0.17.0.zip" -DestinationPath "C:\ghr" -Force
-            # Ensure ghr.exe is in C:\ghr (in case it was extracted into a subfolder)
+            # Ensure ghr.exe is present
             if (!(Test-Path "C:\ghr\ghr.exe")) {
                 $ghrPath = Get-ChildItem -Path "C:\ghr" -Filter "ghr.exe" -Recurse | Select-Object -First 1
                 if ($ghrPath) {
@@ -74,11 +98,15 @@ jobs:
             }
             # Add C:\ghr to the PATH
             $env:PATH += ";C:\ghr"
-            # Upload the Windows artifact using the fixed release tag "latest"
-            C:\ghr\ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME latest "dist\main.exe"
+            # Read the release tag from the workspace file
+            $releaseTag = Get-Content ".\new_release_tag.txt"
+            # Append the Windows artifact to the existing release
+            C:\ghr\ghr.exe --append -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $releaseTag "dist\main.exe"
 
 workflows:
-  say-hello-workflow:
+  release-workflow:
     jobs:
       - build-linux
-      - build-windows
+      - build-windows:
+          requires:
+            - build-linux
