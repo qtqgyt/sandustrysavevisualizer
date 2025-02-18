@@ -2,6 +2,8 @@
 # See: https://circleci.com/docs/configuration-reference
 version: 2.1
 
+orbs:
+    win: circleci/windows@5.1.0
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/jobs-steps/#jobs-overview & https://circleci.com/docs/configuration-reference/#jobs
 jobs:
@@ -11,7 +13,7 @@ jobs:
     resource_class: small
     docker:
       - image: cimg/base:current
-
+        
     # Add steps to the job
     # See: https://circleci.com/docs/jobs-steps/#steps-overview & https://circleci.com/docs/configuration-reference/#steps
     steps:
@@ -30,7 +32,7 @@ jobs:
           name: "Build application"
           command: "pyinstaller --onefile main.py && pwd"
       - run:
-          name: Install latest ghr
+          name: "Install latest ghr"
           command: |
             LATEST_VERSION=$(curl -sSL https://api.github.com/repos/tcnksm/ghr/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
             wget https://github.com/tcnksm/ghr/releases/download/v${LATEST_VERSION}/ghr_v${LATEST_VERSION}_linux_amd64.tar.gz -O ghr_latest.tar.gz
@@ -40,6 +42,16 @@ jobs:
       - run:
           name: "Release"
           command: "ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} $(date +%s) /home/circleci/project/dist/main"
+        
+  build-windows:
+    executor:
+        name: win/default
+    steps:
+        - checkout
+        - run:
+            name: "Install python dependencies"
+            command: "python --version"
+              
 
 # Orchestrate jobs using workflows
 # See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
@@ -48,3 +60,4 @@ workflows:
     # Inside the workflow, you define the jobs you want to run.
     jobs:
       - build-linux
+      - build-windows
