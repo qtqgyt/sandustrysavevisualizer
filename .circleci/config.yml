@@ -65,7 +65,7 @@ jobs:
                 Move-Item -Path "C:\ghr\ghr.exe" -Destination "C:\ghr\ghr.exe"
                 $env:PATH += ";C:\ghr"
 
-                C:/ghr/ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $date $distPath
+                C:\ghr\ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $date $distPath
             
 
 # Orchestrate jobs using workflows
