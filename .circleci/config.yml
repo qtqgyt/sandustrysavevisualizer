@@ -1,77 +1,86 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/configuration-reference
 version: 2.1
 
-orbs:
-    win: circleci/windows@5.1.0
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/jobs-steps/#jobs-overview & https://circleci.com/docs/configuration-reference/#jobs
 jobs:
   build-linux:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/executor-intro/ & https://circleci.com/docs/configuration-reference/#executor-job
-    resource_class: small
     docker:
-      - image: cimg/base:current
-        
-    # Add steps to the job
-    # See: https://circleci.com/docs/jobs-steps/#steps-overview & https://circleci.com/docs/configuration-reference/#steps
+      - image: cimg/python:3.9  # Use an official CircleCI Python image
     steps:
-      # Checkout the code as the first step.
       - checkout
+
+      # Perform a sparse checkout to get only main.py
       - run:
-          name: "Update APT"
-          command: "sudo apt update"
+          name: Sparse Checkout main.py
+          command: |
+            git sparse-checkout init --cone
+            git sparse-checkout set main.py
+
+      # Install dependencies and build the Linux executable
       - run:
-          name: "Install pip"
-          command: "sudo apt install python3-pip" 
+          name: Build Linux Executable
+          command: |
+            pip install pyinstaller pygame
+            pyinstaller --onefile main.py
+
+      # Install GHR on Linux
       - run:
-          name: "Install python dependencies"
-          command: "pip install -r requirements.txt pyinstaller"
-      - run:
-          name: "Build application"
-          command: "pyinstaller --onefile main.py"
-      - run:
-          name: "Install latest ghr"
+          name: Install GHR (Linux)
           command: |
             LATEST_VERSION=$(curl -sSL https://api.github.com/repos/tcnksm/ghr/releases/latest | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
             wget https://github.com/tcnksm/ghr/releases/download/v${LATEST_VERSION}/ghr_v${LATEST_VERSION}_linux_amd64.tar.gz -O ghr_latest.tar.gz
             tar -xzf ghr_latest.tar.gz
-            sudo mv ghr_v${LATEST_VERSION}_linux_amd64/ghr /usr/local/bin/
-            rm -rf ghr_latest.tar.gz ghr_v${LATEST_VERSION}_linux_amd64
+            mv ghr_v${LATEST_VERSION}_linux_amd64/ghr ./ghr
+            chmod +x ./ghr
+
+      # Upload the Linux build artifact using GHR
       - run:
-          name: "Release"
-          command: "ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} $(date +%s) /home/circleci/project/dist/main"
-        
+          name: Upload Linux Release via GHR
+          command: |
+            RELEASE_TAG=$(date +%s)
+            ./ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} $RELEASE_TAG dist/main
+
   build-windows:
     executor:
-        name: win/default
+      name: windows/default
     steps:
-        - checkout
-        - run:
-            name: "Install python dependencies"
-            command: "pip install -r requirements.txt pyinstaller"
-        - run:
-            name: "Build application"
-            command: |
-                pyinstaller --onefile main.py
-                # Get the latest version of GHR
-                $LATEST_VERSION = (Invoke-WebRequest -Uri "https://api.github.com/repos/tcnksm/ghr/releases/latest" | ConvertFrom-Json).tag_name
-                # Download the GHR Windows zip
-                Invoke-WebRequest -Uri "https://github.com/tcnksm/ghr/releases/download/$LATEST_VERSION/ghr_windows_amd64.zip" -OutFile "ghr_latest.zip"
-                # Extract the zip file
-                Expand-Archive -Path "ghr_latest.zip" -DestinationPath "C:\ghr"
-                # Move ghr to a directory in PATH
-                Move-Item -Path "C:\ghr\ghr.exe" -Destination "C:\ghr\ghr.exe"
-                $env:PATH += ";C:\ghr"
+      - checkout
 
-                C:\ghr\ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $date $distPath
-            
+      # Perform a sparse checkout to get only main.py (PowerShell version)
+      - run:
+          name: Sparse Checkout main.py
+          shell: powershell.exe
+          command: |
+            git sparse-checkout init --cone
+            git sparse-checkout set main.py
 
-# Orchestrate jobs using workflows
-# See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
+      # Install dependencies and build the Windows executable
+      - run:
+          name: Build Windows Executable
+          shell: powershell.exe
+          command: |
+            pip install pyinstaller pygame
+            pyinstaller --onefile main.py
+
+      # Install GHR on Windows using curl (since Invoke-WebRequest might be disabled)
+      - run:
+          name: Install GHR (Windows)
+          shell: powershell.exe
+          command: |
+            $LATEST_VERSION = (curl -sSL https://api.github.com/repos/tcnksm/ghr/releases/latest | ConvertFrom-Json).tag_name
+            curl -L "https://github.com/tcnksm/ghr/releases/download/$LATEST_VERSION/ghr_windows_amd64.zip" -o "ghr_latest.zip"
+            Expand-Archive -Path "ghr_latest.zip" -DestinationPath "C:\ghr"
+            $env:PATH += ";C:\ghr"
+
+      # Upload the Windows build artifact using GHR
+      - run:
+          name: Upload Windows Release via GHR
+          shell: powershell.exe
+          command: |
+            $RELEASE_TAG = Get-Date -UFormat "%s"
+            & "C:\ghr\ghr.exe" -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $RELEASE_TAG "dist\main.exe"
+
 workflows:
-  say-hello-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  version: 2
+  build:
     jobs:
+      - build-linux
       - build-windows
