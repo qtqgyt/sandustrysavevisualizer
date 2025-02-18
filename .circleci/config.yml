@@ -13,36 +13,32 @@ jobs:
       - checkout
 
       - run:
-          name: Update APT
+          name: "Update APT"
           command: "sudo apt update"
 
       - run:
-          name: Install pip
+          name: "Install pip"
           command: "sudo apt install python3-pip -y"
 
       - run:
-          name: Install python dependencies
+          name: "Install python dependencies"
           command: "pip install -r requirements.txt pyinstaller"
 
       - run:
-          name: Build application
+          name: "Build application"
           command: "pyinstaller --onefile main.py"
 
       - run:
-          name: Install latest GHR
+          name: "Install GHR v0.17.0"
           command: |
-            LATEST_VERSION=$(curl -sSL https://api.github.com/repos/tcnksm/ghr/releases/latest \
-              | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-            wget https://github.com/tcnksm/ghr/releases/download/v${LATEST_VERSION}/ghr_v${LATEST_VERSION}_linux_amd64.tar.gz -O ghr_latest.tar.gz
-            tar -xzf ghr_latest.tar.gz
-            sudo mv ghr_v${LATEST_VERSION}_linux_amd64/ghr /usr/local/bin/
-            rm -rf ghr_latest.tar.gz ghr_v${LATEST_VERSION}_linux_amd64
+            wget https://github.com/tcnksm/ghr/releases/download/v0.17.0/ghr_v0.17.0_linux_amd64.tar.gz -O ghr_0.17.0.tar.gz
+            tar -xzf ghr_0.17.0.tar.gz
+            sudo mv ghr_v0.17.0_linux_amd64/ghr /usr/local/bin/
+            rm -rf ghr_0.17.0.tar.gz ghr_v0.17.0_linux_amd64
 
       - run:
-          name: Release Linux Build with GHR
-          command: |
-            # Use current Unix timestamp as the release tag.
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} $(date +%s) /home/circleci/project/dist/main
+          name: "Release Linux Build with GHR"
+          command: "ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} $(date +%s) /home/circleci/project/dist/main"
 
   build-windows:
     executor:
@@ -51,33 +47,38 @@ jobs:
       - checkout
 
       - run:
-          name: Install python dependencies
+          name: "Install python dependencies"
           shell: powershell.exe
           command: |
             pip install -r requirements.txt pyinstaller
 
       - run:
-          name: Build application
+          name: "Build application"
           shell: powershell.exe
           command: |
             pyinstaller --onefile main.py
 
       - run:
-          name: Install latest GHR and Release Windows Build
+          name: "Install GHR v0.17.0 and Release Windows Build"
           shell: powershell.exe
           command: |
-            # Get the latest GHR version (using curl)
-            $LATEST_VERSION = (curl -sSL https://api.github.com/repos/tcnksm/ghr/releases/latest | ConvertFrom-Json).tag_name
-            # Download the Windows GHR zip
-            curl -L "https://github.com/tcnksm/ghr/releases/download/$LATEST_VERSION/ghr_windows_amd64.zip" -o "ghr_latest.zip"
+            # Download GHR v0.17.0 Windows zip using curl.exe
+            curl.exe -L "https://github.com/tcnksm/ghr/releases/download/v0.17.0/ghr_v0.17.0_windows_amd64.zip" -o "ghr_0.17.0.zip"
             # Extract the zip archive
-            Expand-Archive -Path "ghr_latest.zip" -DestinationPath "C:\ghr"
-            # Add the GHR directory to PATH so that ghr.exe can be invoked
+            Expand-Archive -Path "ghr_0.17.0.zip" -DestinationPath "C:\ghr" -Force
+            # Ensure ghr.exe is in C:\ghr (in case it was extracted into a subfolder)
+            if (!(Test-Path "C:\ghr\ghr.exe")) {
+                $ghrPath = Get-ChildItem -Path "C:\ghr" -Filter "ghr.exe" -Recurse | Select-Object -First 1
+                if ($ghrPath) {
+                    Copy-Item -Path $ghrPath.FullName -Destination "C:\ghr\ghr.exe"
+                }
+            }
+            # Add C:\ghr to the PATH
             $env:PATH += ";C:\ghr"
             # Define release tag and artifact path
             $releaseTag = Get-Date -UFormat "%s"
             $distPath = "dist\main.exe"
-            # Invoke GHR to update (or create) the release with the Windows build artifact
+            # Upload the Windows build artifact using GHR
             C:\ghr\ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $releaseTag $distPath
 
 workflows:
