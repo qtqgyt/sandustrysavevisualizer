@@ -2,5 +2,5 @@
 > [!IMPORTANT]
 > Only compatible with version 0.0.5 or 0.0.5 compatible save files.
 ## Setup
-Download for [Windows](https://github.com/qtqgyt/sandustrysavevisualizer/releases/latest/download/main.exe) and [Linux](https://github.com/qtqgyt/sandustrysavevisualizer/releases/latest/download/main)
+Download for [Windows](https://github.com/qtqgyt/sandustrysavevisualizer/releases/latest/download/main.exe) and [Linux](https://github.com/qtqgyt/sandustrysavevisualizer/releases/latest/download/main)\
 Or, if you want to use the normal python file, you're probably smart enough to not need instructions. I don't want to type right now.
