@@ -89,11 +89,15 @@ workflows:
     jobs:
       - build-linux:
           filters:
+            branches:
+              only: /.*/
             paths:
               ignore:
                 - README.md
       - build-windows:
           filters:
+            branches:
+              only: /.*/
             paths:
               ignore:
                 - README.md
