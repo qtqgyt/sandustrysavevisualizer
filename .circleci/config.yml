@@ -38,10 +38,12 @@ jobs:
       - run:
           name: "Determine new release tag and Release Linux Build"
           command: |
+            # Query GitHub for the latest release tag.
             CURRENT_TAG=$(curl -sSL https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
             if [ -z "$CURRENT_TAG" ] || [ "$CURRENT_TAG" = "null" ]; then
               NEW_TAG=1
             else
+              # Remove a leading "v" if present, then increment.
               CLEAN_TAG=$(echo $CURRENT_TAG | sed 's/^v//')
               NEW_TAG=$((CLEAN_TAG + 1))
             fi
@@ -70,34 +72,28 @@ jobs:
           name: "Install GHR v0.17.0 and Append Windows Build"
           shell: powershell.exe
           command: |
+            # Download GHR v0.17.0 for Windows using curl.exe.
             curl.exe -L "https://github.com/tcnksm/ghr/releases/download/v0.17.0/ghr_v0.17.0_windows_amd64.zip" -o "ghr_0.17.0.zip"
+            # Extract the archive.
             Expand-Archive -Path "ghr_0.17.0.zip" -DestinationPath "C:\ghr" -Force
+            # Ensure ghr.exe is available.
             if (!(Test-Path "C:\ghr\ghr.exe")) {
                 $ghrPath = Get-ChildItem -Path "C:\ghr" -Filter "ghr.exe" -Recurse | Select-Object -First 1
                 if ($ghrPath) {
                     Copy-Item -Path $ghrPath.FullName -Destination "C:\ghr\ghr.exe"
                 }
             }
+            # Add C:\ghr to the PATH.
             $env:PATH += ";C:\ghr"
+            # Query GitHub for the latest release tag.
             $releaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/$env:CIRCLE_PROJECT_USERNAME/$env:CIRCLE_PROJECT_REPONAME/releases/latest"
             $releaseTag = $releaseData.tag_name
             Write-Host "Latest release tag: $releaseTag"
+            # Append the Windows artifact (main.exe) to the existing release.
             C:\ghr\ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $releaseTag "dist\main.exe"
 
 workflows:
   release-workflow:
     jobs:
-      - build-linux:
-          filters:
-            branches:
-              only: /.*/
-            paths:
-              ignore:
-                - README.md
-      - build-windows:
-          filters:
-            branches:
-              only: /.*/
-            paths:
-              ignore:
-                - README.md
+      - build-linux
+      - build-windows
