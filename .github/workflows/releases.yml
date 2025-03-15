@@ -119,7 +119,7 @@ jobs:
           path: release_artifacts
 
       - name: Debug
-        run: ls && pwd
+        run: ls release_artifacts/ && pwd
 
       - name: Create GitHub Release
         id: create_release
