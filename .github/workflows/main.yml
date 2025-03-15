@@ -1,0 +1,30 @@
+name: Build Executable
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Install pyinstaller
+      run: pip install pyinstaller
+
+    - name: Build executable
+      run: pyinstaller --onefile main.py
+
+    - name: Archive build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: executable
+        path: dist/
