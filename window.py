@@ -10,12 +10,13 @@ class window:
         self.map = map
         self.zoom_level = 1.0
         self.base_zoom_multiplier = self.zoom_level
+        self.window_width, self.window_height = 800, 600
+
         pygame.init()
         pygame.display.set_icon(self._create_magnifying_glass_icon())
         pygame.mouse.set_cursor(self._create_cursor())
-        self.window_width, self.window_height = 800, 600
-        self.screen = pygame.display.set_mode((self.window_width, self.window_height))
         pygame.display.set_caption(title)
+        self.screen = pygame.display.set_mode((self.window_width, self.window_height))
         pass
 
     def _create_magnifying_glass_icon(self) -> pygame.Surface:
@@ -44,8 +45,8 @@ class window:
         circle_center = (size // 2, size // 2)
 
         # TODO: Finish handle or remove
-        handle_start = (circle_center[0] + 5, circle_center[1] + 5)
-        handle_end = (size, size)
+        # handle_start = (circle_center[0] + 5, circle_center[1] + 5)
+        # handle_end = (size, size)
 
         pygame.draw.circle(cursor_surface, (128, 128, 128), circle_center, circle_radius, 2)
 
