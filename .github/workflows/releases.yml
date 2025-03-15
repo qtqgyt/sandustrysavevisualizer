@@ -47,7 +47,7 @@ jobs:
           # Extract changelog from commit (lines after "Changelog:")
           CHANGELOG=$(echo "$COMMIT_MSG" | sed -n '/Changelog:/,$p' | sed '1d')
           if [ -z "$CHANGELOG" ]; then
-            echo "No changelog found in commit message."
+            echo "No changelog found in commit message. Please add a changelog and try again."
             exit 1
           fi
 
