@@ -92,10 +92,10 @@ jobs:
 
       - name: Build executable
         run: |
-          if [[ "${{ matrix.os == "macos-latest" }}" ]]; then
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
             brew install gnu-sed
             gsed -i "s/INSERTVERSIONHERE/${{ needs.prepare-release.outputs.version }}/g" main.py
-          elif [[ "${{ matrix.os == "windows-latest" }}" ]]; then
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             (Get-Content main.py) -replace "INSERTVERSIONHERE", "${{ needs.prepare-release.outputs.version }}" | Set-Content main.py
           else
             sed -i "s/INSERTVERSIONHERE/${{ needs.prepare-release.outputs.version }}/g" main.py
