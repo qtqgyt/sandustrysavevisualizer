@@ -20,18 +20,15 @@ class Map:
                     self.world = obj["world"]["matrix"]
                     break
             if not found:
-                print("Could not find world.matrix in save file.")
-                return
+                raise RuntimeError("Could not find world.matrix in save file.")
             if not (isinstance(self.world, list) and all(isinstance(row, list) for row in self.world)):
-                print("world.matrix is not a valid tilemap.")
-                return
+                raise RuntimeError("world.matrix is not a valid tilemap.")
             player_data = objects[1].get("player", {}) if len(objects) > 1 else {}
             self.player_x = player_data.get("x", 0) / 4
             self.player_y = player_data.get("y", 0) / 4
             self.active_slot = player_data.get("activeslotindex", 0)
         except Exception as e:
-            print(f"Error loading tilemap: {e}")
-            return
+            raise e
 
 
 class TileInfo:
