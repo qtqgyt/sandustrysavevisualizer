@@ -75,31 +75,36 @@ class window:
         screen.blit(loading_text, text_rect)
         pygame.display.flip()
 
-    def draw_hud(self, screen, font):
-        """Render gold, fluxite, artifacts amounts and hotbar on HUD"""
-        # Resources HUD
-        gold_text = font.render(f"Gold: {self.map.gold}", True, (255, 215, 0))
-        fluxite_text = font.render(f"Fluxite: {self.map.fluxite}", True, (175, 0, 224))
-        artifacts_text = font.render(f"Artifacts: {self.map.artifacts}/2", True, (45, 197, 214))
-        background_width = max(gold_text.get_width(), fluxite_text.get_width(), artifacts_text.get_width()) + 10
-        background_surface = pygame.Surface((background_width + 10, 100), pygame.SRCALPHA)
-        background_surface.fill((0, 0, 0, 0))
-        pygame.draw.rect(background_surface, (128, 128, 128, 128), pygame.Rect(5, 5, background_width, 90), 0, 5)
-        screen.blit(background_surface, (0, 0))
-        screen.blit(gold_text, (10, 10))
-        screen.blit(fluxite_text, (10, 40))
-        screen.blit(artifacts_text, (10, 70))
+    def draw_resources(self) -> pygame.Surface:
+        gold_text = self.font.render(f"Gold: {self.map.gold}", True, (255, 215, 0))
+        fluxite_text = self.font.render(f"Fluxite: {self.map.fluxite}", True, (175, 0, 224))
+        artifacts_text = self.font.render(f"Artifacts: {self.map.artifacts}/2", True, (45, 197, 214))
 
+        background_width = max(gold_text.get_width(), fluxite_text.get_width(), artifacts_text.get_width()) + 10
+        resources_hud = pygame.Surface((background_width + 10, 100), pygame.SRCALPHA)
+        resources_hud.fill((0, 0, 0, 0))
+
+        pygame.draw.rect(resources_hud, (128, 128, 128, 128), pygame.Rect(5, 5, background_width, 90), 0, 5)
+        resources_hud.blits(
+            [
+                (gold_text, (10, 10)),
+                (fluxite_text, (10, 40)),
+                (artifacts_text, (10, 70)),
+            ]
+        )
+        return resources_hud
+
+    def draw_hotbar(self):
         # Hotbar
         slot_width = 60
         margin = 10
         hotbar_height = slot_width + (margin * 2)
-        screen_width = screen.get_width()
-        hotbar_y = screen.get_height() - hotbar_height
+        screen_width = self.screen.get_width()
+        hotbar_y = self.screen.get_height() - hotbar_height
 
         # Calculate actual hotbar background width to only cover slots
-        total_slots = 9
-        total_width = total_slots * slot_width + (total_slots + 1) * margin
+        TOTAL_SLOTS = 9
+        total_width = TOTAL_SLOTS * slot_width + (TOTAL_SLOTS + 1) * margin
         start_x = (screen_width - total_width) // 2
 
         # Create hotbar background surface with transparency
@@ -110,17 +115,17 @@ class window:
         )  # Add rounded corners
 
         # Blit hotbar background at calculated position
-        screen.blit(hotbar_surface, (start_x, hotbar_y))
+        self.screen.blit(hotbar_surface, (start_x, hotbar_y))
 
-        for idx in range(total_slots):
+        for idx in range(TOTAL_SLOTS):
             slot_x = start_x + margin + idx * (slot_width + margin)
             color = (255, 215, 0) if idx == self.map.active_slot else (100, 100, 100)
-            pygame.draw.rect(screen, color, (slot_x, hotbar_y + margin, slot_width, slot_width), 2)
-            text_surface = font.render(str(idx), True, (255, 255, 255))
+            pygame.draw.rect(self.screen, color, (slot_x, hotbar_y + margin, slot_width, slot_width), 2)
+            text_surface = self.font.render(str(idx), True, (255, 255, 255))
             # Position text in top-left corner with small offset
             text_x = slot_x + 4
             text_y = hotbar_y + margin + 4
-            screen.blit(text_surface, (text_x, text_y))
+            self.screen.blit(text_surface, (text_x, text_y))
 
     def draw_new_tilemap(self) -> None:
         self.draw_loading_overlay(self.screen, self.font)
@@ -243,7 +248,7 @@ class window:
                 tile_info = self.map.get_tile_info(tile)
                 text_surface = self.font.render(str(tile_info), True, (255, 255, 255))
                 self.screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
-            self.draw_hud(self.screen, self.font)  # Updated function call
+            self.screen.blit(self.draw_resources(), (0, 0))
 
             pygame.display.flip()
             clock.tick(60)
