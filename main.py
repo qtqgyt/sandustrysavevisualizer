@@ -1,14 +1,15 @@
+#!python
 import json
-from os import environ
 import sys
 import tkinter as tk
 from tkinter import filedialog
-environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+
 import pygame
 
 zoom_level = 1.0
 
 base_zoom_multiplier = zoom_level
+
 
 class TileInfo:
     def __init__(self, color: tuple[int, int, int], name: str, hex_code: str):
@@ -63,28 +64,32 @@ tile_colors: dict[int, TileInfo] = {
     117: TileInfo((70, 153, 26), "Seed", "#46991a"),
     118: TileInfo((139, 105, 218), "Amethelis", "#8b69da"),
     119: TileInfo((255, 174, 11), "Lava", "#ffae0b"),
-    120: TileInfo((117, 10, 0), "Cinder", "#750a00")
+    120: TileInfo((117, 10, 0), "Cinder", "#750a00"),
 }
+
 
 def render():
     # Move zoom_level to top of function and remove duplicate declaration
     zoom_level = 1.0
-    # Open file dialog to choose 
+    # Open file dialog to choose
     pygame.init()
     pygame.display.set_icon(create_magnifying_glass_icon())
     pygame.mouse.set_cursor(create_cursor())
     window_width, window_height = 800, 600
     screen = pygame.display.set_mode((window_width, window_height))
     pygame.display.set_caption("Sandustry Save Visualizer")
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    json_path = filedialog.askopenfilename(title="Select save file", filetypes=[("Save Files", "*.save")])
-    root.destroy()
+    if len(sys.argv) > 1:
+        json_path = sys.argv[1]
+    else:
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        json_path = filedialog.askopenfilename(title="Select save file", filetypes=[("Save Files", "*.save")])
+        root.destroy()
     if not json_path:
         print("No file selected.")
         return
     try:
-        with open(json_path, 'r', encoding="utf-8", errors="replace") as file:
+        with open(json_path, "r", encoding="utf-8", errors="replace") as file:
             contents = file.read()
         json_strings = [s for s in contents.splitlines() if s.strip()]
         objects = []
@@ -156,7 +161,7 @@ def render():
         """Draw a loading text overlay in the center of the screen"""
         loading_text = font.render("LOADING...", True, (255, 255, 255))
         text_rect = loading_text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
-        
+
         # Draw semi-transparent background
         background = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
         pygame.draw.rect(background, (0, 0, 0, 128), background.get_rect())
@@ -173,7 +178,7 @@ def render():
         if new_tile_size != tile_size:
             # Show loading overlay before starting update
             draw_loading_overlay(screen, font)
-            
+
             tile_size = new_tile_size
             tilemap_width = cols * tile_size
             tilemap_height = rows * tile_size
@@ -191,7 +196,7 @@ def render():
         return False
 
     update_map_dimensions()
-    
+
     while running:
         pygame.event.pump()
         for event in pygame.event.get():
@@ -201,11 +206,11 @@ def render():
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 world_x = camera_x + mouse_x
                 world_y = camera_y + mouse_y
-                
+
                 # Store relative position before zoom
                 rel_x = world_x / tilemap_width if tilemap_width > 0 else 0.5
                 rel_y = world_y / tilemap_height if tilemap_height > 0 else 0.5
-                
+
                 old_zoom = zoom_level
                 if event.key in [pygame.K_PLUS, pygame.K_KP_PLUS, pygame.K_EQUALS]:
                     print(f"Debug: Attempting to zoom in from {zoom_level}")
@@ -215,7 +220,7 @@ def render():
                     print(f"Debug: Attempting to zoom out from {zoom_level}")
                     zoom_level = max(0.25, zoom_level / 1.5)  # Increased zoom factor
                     print(f"Debug: New zoom level: {zoom_level}")
-                
+
                 # Only update if zoom changed
                 if old_zoom != zoom_level:
                     print(f"Debug: Zoom changed from {old_zoom} to {zoom_level}")
@@ -263,7 +268,7 @@ def render():
             text_surface = font.render(f"Tile: {tile_id} - {tile_info.name}", True, (255, 255, 255))
             screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
         draw_hud(screen, artifacts, fluxite, font, gold, active_slot)  # Updated function call
-        
+
         pygame.display.flip()
         clock.tick(60)
 
@@ -292,22 +297,22 @@ def draw_hud(screen, artifacts, fluxite, font, gold, active_slot: int):
     hotbar_height = slot_width + (margin * 2)
     screen_width = screen.get_width()
     hotbar_y = screen.get_height() - hotbar_height
-    
+
     # Calculate actual hotbar background width to only cover slots
     total_slots = 9
     total_width = total_slots * slot_width + (total_slots + 1) * margin
     start_x = (screen_width - total_width) // 2
-    
+
     # Create hotbar background surface with transparency
     hotbar_surface = pygame.Surface((total_width, hotbar_height), pygame.SRCALPHA)
     # Draw rounded rectangle for hotbar background
-    pygame.draw.rect(hotbar_surface, (50, 50, 50, 128), 
-                    (0, 0, total_width, hotbar_height),
-                    border_radius=10)  # Add rounded corners
-    
+    pygame.draw.rect(
+        hotbar_surface, (50, 50, 50, 128), (0, 0, total_width, hotbar_height), border_radius=10
+    )  # Add rounded corners
+
     # Blit hotbar background at calculated position
     screen.blit(hotbar_surface, (start_x, hotbar_y))
-    
+
     for idx in range(total_slots):
         slot_x = start_x + margin + idx * (slot_width + margin)
         color = (255, 215, 0) if idx == active_slot else (100, 100, 100)
@@ -353,5 +358,5 @@ def create_magnifying_glass_icon() -> pygame.Surface:
     return icon
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     render()
