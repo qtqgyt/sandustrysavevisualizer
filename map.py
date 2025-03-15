@@ -15,7 +15,7 @@ class TileInfo:
 default_tile = TileInfo(-1, (255, 192, 203), "Unknown", "#FFC0CB")
 
 tile_colors: dict[int, TileInfo] = {
-    0: TileInfo(0, (0, 0, 0), "air", "#000000"),
+    0: TileInfo(0, (68, 68, 68), "air", "#000000"),
     2: TileInfo(2, (186, 127, 46), "Soil", "#ba7f2e"),
     3: TileInfo(3, (119, 147, 37), "Sporemound", "#779325"),
     4: TileInfo(4, (0, 0, 0), "Fog", "#000000"),
@@ -92,4 +92,8 @@ class Map:
             raise e
 
     def get_tile_info(self, tile) -> TileInfo:
-        return tile_colors.get(tile, default_tile) if isinstance(tile, int) else default_tile
+        if isinstance(tile, int):
+            return tile_colors.get(tile, default_tile)
+        if isinstance(tile, dict) and "element" in tile and "type" in tile["element"]:
+            return tile_colors.get(tile["element"]["type"] + 100, default_tile)
+        return default_tile
