@@ -209,10 +209,10 @@ class window:
             tile_x = world_x // self.zoom_level
             tile_y = world_y // self.zoom_level
             if 0 <= tile_y < self.rows and 0 <= tile_x < self.cols:
-                tile_id = self.map.world[tile_y][tile_x]
-                # If tile_id is an array, use its first element.
-                if isinstance(tile_id, list):
-                    tile_id = tile_id[0]
+                tile = self.map.world[tile_y][tile_x]
+                # If tile is an array, use its first element.
+                if isinstance(tile, list):
+                    tile = tile[0]
                 hover_rect = pygame.Rect(
                     tile_x * self.zoom_level - self.camera_x,
                     tile_y * self.zoom_level - self.camera_y,
@@ -220,8 +220,8 @@ class window:
                     self.zoom_level,
                 )
                 pygame.draw.rect(self.screen, (255, 0, 0), hover_rect, 2)
-                tile_info = tile_colors.get(tile_id, default_tile) if isinstance(tile_id, int) else default_tile
-                text_surface = self.font.render(f"Tile: {tile_id} - {tile_info.name}", True, (255, 255, 255))
+                tile_info = self.map.get_tile_info(tile)
+                text_surface = self.font.render(str(tile_info), True, (255, 255, 255))
                 self.screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
             self.draw_hud(self.screen, self.font)  # Updated function call
 
