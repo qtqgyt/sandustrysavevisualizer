@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   prepare-release:
@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
 
       - name: Extract version and changelog
         id: extract
@@ -75,6 +77,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -95,7 +99,6 @@ jobs:
             echo "artifact=dist/main.exe" >> $GITHUB_OUTPUT
           else
             echo "artifact=dist/main" >> $GITHUB_OUTPUT
-          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
