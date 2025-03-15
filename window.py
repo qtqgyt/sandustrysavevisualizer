@@ -135,6 +135,13 @@ class window:
                 tile_info = tile_colors.get(tile, default_tile) if isinstance(tile, int) else default_tile
                 rect = pygame.Rect(x * self.zoom_level, y * self.zoom_level, self.zoom_level, self.zoom_level)
                 pygame.draw.rect(self.tilemap_surface, tile_info.color, rect)
+        # Draw player marker: green circle indicating player's position
+        pygame.draw.circle(
+            self.tilemap_surface,
+            (0, 255, 0),
+            (self.map.player_x * self.zoom_level, self.map.player_y * self.zoom_level),
+            max(self.zoom_level // 2, 5),
+        )
 
     def update_map_dimensions(self, change: int) -> None:
         old_zoom = self.zoom_level
@@ -195,13 +202,6 @@ class window:
                 self.tilemap_surface,
                 (0, 0),
                 area=pygame.Rect(self.camera_x, self.camera_y, self.window_width, self.window_height),
-            )
-            # Draw player marker: green circle indicating player's position
-            pygame.draw.circle(
-                self.screen,
-                (0, 255, 0),
-                (self.map.player_x - self.camera_x, self.map.player_y - self.camera_y),
-                max(self.zoom_level // 2, 5),
             )
             mouse_x, mouse_y = pygame.mouse.get_pos()
             world_x = self.camera_x + mouse_x
