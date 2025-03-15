@@ -148,10 +148,13 @@ jobs:
           asset_name: main-windows.exe
           asset_content_type: application/octet-stream
 
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload MacOS Executable
+        if: ${{ always() }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: |
-            main-windows.exe
-            main-linux
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_artifacts/macos-latest-SandustrySaveViewer/main
+          asset_name: main-macos
+          asset_content_type: application/octet-stream
