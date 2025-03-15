@@ -1,3 +1,4 @@
+import math
 import sys
 
 import pygame
@@ -8,12 +9,20 @@ from map import Map, default_tile, tile_colors
 class window:
     def __init__(self, title: str, map: Map) -> None:
         self.map = map
-        self.zoom_level = 1
-        self.window_width, self.window_height = 800, 600
+        self.zoom_level = 3
+        # self.window_width, self.window_height = 800, 600
+        self.window_width, self.window_height = 1920, 1380
 
         pygame.init()
-        pygame.display.set_icon(self._create_magnifying_glass_icon())
-        pygame.mouse.set_cursor(self._create_cursor())
+
+        ICON_SIZE = 32
+        pygame.display.set_icon(self._create_magnifying_glass(ICON_SIZE, filled=True))
+
+        CURSOR_SIZE = 24
+        cursor_surface = self._create_magnifying_glass(CURSOR_SIZE)
+        cursor = pygame.cursors.Cursor((CURSOR_SIZE // 2, CURSOR_SIZE // 2), cursor_surface)
+        pygame.mouse.set_cursor(cursor)
+
         pygame.display.set_caption(title)
         self.screen = pygame.display.set_mode((self.window_width, self.window_height))
 
@@ -30,49 +39,33 @@ class window:
         self.camera_y = (self.tilemap_height - self.window_height) // 2
         self._calculate_camera_borders()
 
-    def _create_magnifying_glass_icon(self) -> pygame.Surface:
-        size = 32
-        icon = pygame.Surface((size, size), pygame.SRCALPHA)
-        icon.fill((0, 0, 0, 0))
+    def _create_magnifying_glass(self, size: int, filled: bool = False) -> pygame.Surface:
+        magnifying_glass = pygame.Surface((size, size), pygame.SRCALPHA)
+        magnifying_glass.fill((0, 0, 0, 0))
 
         circle_radius = size // 3
         circle_center = (size // 2, size // 2)
 
-        handle_start = (circle_center[0] + 3, circle_center[1] + 3)
+        handle_offset = math.floor((circle_radius) / math.sqrt(2))
+        handle_start = (circle_center[0] + handle_offset, circle_center[1] + handle_offset)
         handle_end = (size - 2, size - 2)
-        pygame.draw.line(icon, (64, 64, 64), handle_start, handle_end, 4)
 
-        pygame.draw.circle(icon, (128, 128, 128), circle_center, circle_radius, 2)
-        pygame.draw.circle(icon, (173, 216, 230, 128), circle_center, circle_radius - 1, 0)
+        pygame.draw.line(magnifying_glass, (64, 64, 64), handle_start, handle_end, 4)
+        pygame.draw.circle(magnifying_glass, (128, 128, 128), circle_center, circle_radius, 2)
+        if filled:
+            pygame.draw.circle(magnifying_glass, (173, 216, 230, 128), circle_center, circle_radius - 1, 0)
+        return magnifying_glass
 
-        return icon
-
-    def _create_cursor(self) -> pygame.Cursor:
-        size = 24
-        cursor_surface = pygame.Surface((size, size), pygame.SRCALPHA)
-        cursor_surface.fill((0, 0, 0, 0))
-
-        circle_radius = size // 3
-        circle_center = (size // 2, size // 2)
-
-        # TODO: Finish handle or remove
-        # handle_start = (circle_center[0] + 5, circle_center[1] + 5)
-        # handle_end = (size, size)
-
-        pygame.draw.circle(cursor_surface, (128, 128, 128), circle_center, circle_radius, 2)
-
-        return pygame.cursors.Cursor(circle_center, cursor_surface)
-
-    def draw_loading_overlay(self, screen: pygame.Surface, font: pygame.font.Font):
+    def draw_loading_overlay(self):
         """Draw a loading text overlay in the center of the screen"""
-        loading_text = font.render("LOADING...", True, (255, 255, 255))
-        text_rect = loading_text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+        loading_text = self.font.render("LOADING...", True, (255, 255, 255))
+        text_rect = loading_text.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2))
 
         # Draw semi-transparent background
-        background = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+        background = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
         pygame.draw.rect(background, (0, 0, 0, 128), background.get_rect())
-        screen.blit(background, (0, 0))
-        screen.blit(loading_text, text_rect)
+        self.screen.blit(background, (0, 0))
+        self.screen.blit(loading_text, text_rect)
         pygame.display.flip()
 
     def draw_resources(self) -> pygame.Surface:
@@ -128,7 +121,7 @@ class window:
             self.screen.blit(text_surface, (text_x, text_y))
 
     def draw_new_tilemap(self) -> None:
-        self.draw_loading_overlay(self.screen, self.font)
+        self.draw_loading_overlay()
         self.tilemap_width = self.cols * self.zoom_level
         self.tilemap_height = self.rows * self.zoom_level
         print(f"Debug: New dimensions - width: {self.tilemap_width}, height: {self.tilemap_height}")
