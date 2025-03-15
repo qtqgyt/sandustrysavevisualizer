@@ -91,7 +91,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build executable
-        run: pyinstaller --onefile main.py
+        run: sed -i "s/INSERTVERSIONHERE/${{ needs.prepare-release.outputs.version }}/g" main.py && pyinstaller --onefile main.py
 
       - name: Set artifact path
         id: set_path
