@@ -78,10 +78,13 @@ def render():
     window_width, window_height = 800, 600
     screen = pygame.display.set_mode((window_width, window_height))
     pygame.display.set_caption("Sandustry Save Visualizer")
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
-    json_path = filedialog.askopenfilename(title="Select save file", filetypes=[("Save Files", "*.save")])
-    root.destroy()
+    if len(sys.argv) > 1:
+        json_path = sys.argv[1]
+    else:
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        json_path = filedialog.askopenfilename(title="Select save file", filetypes=[("Save Files", "*.save")])
+        root.destroy()
     if not json_path:
         print("No file selected.")
         return
