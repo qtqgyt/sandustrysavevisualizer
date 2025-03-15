@@ -3,7 +3,7 @@ import sys
 
 import pygame
 
-from map import Map, default_tile, tile_colors
+from map import Map
 
 
 class window:
@@ -131,7 +131,7 @@ class window:
             for x, tile in enumerate(row):
                 if isinstance(tile, list):
                     tile = tile[0]
-                tile_info = tile_colors.get(tile, default_tile) if isinstance(tile, int) else default_tile
+                tile_info = self.map.get_tile_info(tile)
                 rect = pygame.Rect(x * self.zoom_level, y * self.zoom_level, self.zoom_level, self.zoom_level)
                 pygame.draw.rect(self.tilemap_surface, tile_info.color, rect)
         # Draw player marker: green circle indicating player's position
