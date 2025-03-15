@@ -67,7 +67,7 @@ jobs:
           echo "Version: $VERSION"
           echo "Changelog: $CHANGELOG"
 
-          echo "::set-output name=version::$VERSION"
+          echo "{name}={value}" >> $GITHUB_OUTPUT
           echo "::set-output name=changelog::$CHANGELOG"
 
   build:
@@ -91,7 +91,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build executable
-        run: pyinstaller --onefile main.py
+        run: pyinstaller --onefile main.py && ls dist/
 
       - name: Set artifact path
         id: set_path
