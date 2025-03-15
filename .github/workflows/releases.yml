@@ -119,7 +119,7 @@ jobs:
           path: release_artifacts
 
       - name: Debug
-        run: ls release_artifacts/ && pwd
+        run: ls release_artifacts/ubuntu-latest-SandustrySaveViewer/ && pwd
 
       - name: Create GitHub Release
         id: create_release
