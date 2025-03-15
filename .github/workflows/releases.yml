@@ -51,6 +51,8 @@ jobs:
             exit 1
           fi
 
+          echo "Finished!"
+
           # Get latest release version from GitHub API
           LATEST=$(curl -s https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest | jq -r .tag_name)
           if [ "$LATEST" != "null" ] && [ -n "$LATEST" ]; then
