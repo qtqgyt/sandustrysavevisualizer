@@ -109,49 +109,49 @@ jobs:
           name: ${{ matrix.os }}-SandustrySaveViewer
           path: ${{ steps.set_path.outputs.artifact }}
 
-    create-release:
-      needs: [prepare-release, build]
-      runs-on: ubuntu-latest
-      steps:
-        - name: Download all build artifacts
-          uses: actions/download-artifact@v4
-          with:
-            path: release_artifacts
-  
-        - name: Create GitHub Release
-          id: create_release
-          uses: ncipollo/release-action@v1
-          with:
-            tag: v${{ needs.prepare-release.outputs.version }}
-            name: Release ${{ needs.prepare-release.outputs.version }}
-            body: ${{ needs.prepare-release.outputs.changelog }}
-  
-        - name: Upload Linux Executable
-          if: ${{ always() }}
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
-            asset_path: release_artifacts/ubuntu-latest-SandustrySaveViewer/dist/main
-            asset_name: main-linux
-            asset_content_type: application/octet-stream
-  
-        - name: Upload Windows Executable
-          if: ${{ always() }}
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
-            asset_path: release_artifacts/windows-latest-SandustrySaveViewer/dist/main.exe
-            asset_name: main-windows.exe
-            asset_content_type: application/octet-stream
-  
-        - name: Release
-          uses: softprops/action-gh-release@v2
-          if: startsWith(github.ref, 'refs/tags/')
-          with:
-            files: |
-              main-windows.exe
-              main-linux
+  create-release:
+    needs: [prepare-release, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_artifacts
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: v${{ needs.prepare-release.outputs.version }}
+          name: Release ${{ needs.prepare-release.outputs.version }}
+          body: ${{ needs.prepare-release.outputs.changelog }}
+
+      - name: Upload Linux Executable
+        if: ${{ always() }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_artifacts/ubuntu-latest-SandustrySaveViewer/dist/main
+          asset_name: main-linux
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows Executable
+        if: ${{ always() }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_artifacts/windows-latest-SandustrySaveViewer/dist/main.exe
+          asset_name: main-windows.exe
+          asset_content_type: application/octet-stream
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            main-windows.exe
+            main-linux
