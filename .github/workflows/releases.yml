@@ -91,7 +91,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build executable
-        run: pyinstaller --onefile main.py && ls dist/ && pwd
+        run: pyinstaller --onefile main.py
 
       - name: Set artifact path
         id: set_path
@@ -117,6 +117,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release_artifacts
+
+      - name: Debug
+        run: ls && pwd
 
       - name: Create GitHub Release
         id: create_release
