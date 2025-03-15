@@ -36,19 +36,47 @@ jobs:
             rm -rf ghr_0.17.0.tar.gz ghr_v0.17.0_linux_amd64
 
       - run:
-          name: "Determine new release tag and Release Linux Build"
+          name: "Extract data from commit"
           command: |
-            # Query GitHub for the latest release tag.
-            CURRENT_TAG=$(curl -sSL https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-            if [ -z "$CURRENT_TAG" ] || [ "$CURRENT_TAG" = "null" ]; then
-              NEW_TAG=1
-            else
-              # Remove a leading "v" if present, then increment.
-              CLEAN_TAG=$(echo $CURRENT_TAG | sed 's/^v//')
-              NEW_TAG=$((CLEAN_TAG + 1))
+            MERGE_COMMIT_MSG=$(git log --format=%B -n 1 $CIRCLE_SHA1)
+
+            VERSION=$(echo "$MERGE_COMMIT_MSG" | grep -oP '(?<=Version: )[^ ]+')
+            if [ -z "$VERSION" ]; then
+              echo "Error: No version found in commit message."
+              exit 1
             fi
-            echo "New release tag: $NEW_TAG"
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} $NEW_TAG /home/circleci/project/dist/main
+            if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "❌ ERROR: Invalid version format. Expected X.Y.Z (e.g., 1.2.3)."
+              exit 1
+            fi
+
+            LATEST_TAG=$(curl -sSL "https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/releases/latest" | jq -r .tag_name)
+            if [[ "$LATEST_TAG" == "null" || -z "$LATEST_TAG" ]]; then
+              echo "⚠️ No previous release found. Skipping version check."
+              exit 0
+            fi
+            LATEST_VERSION=${LATEST_TAG#v} # Remove leading 'v' if exists
+            function version_greater() {
+              printf "%s\n%s\n" "$2" "$1" | sort -V | head -n1 | grep -q "$2"
+            }
+            if ! version_greater "$VERSION" "$LATEST_VERSION"; then
+              echo "❌ ERROR: Version $VERSION is not greater than latest release $LATEST_VERSION."
+              exit 1
+            fi
+
+            CHANGELOG=$(echo "$MERGE_COMMIT_MSG" | sed -n '/Changelog:/,/^$/p' | sed '1d')
+            if [ -z "$CHANGELOG" ]; then
+              echo "Error: No changelog found in commit message."
+              exit 1
+            fi
+
+            echo "VERSION=$VERSION" >> $BASH_ENV
+            echo "CHANGELOG=$CHANGELOG" >> $BASH_ENV
+
+      - run:
+          name: "Release Linux Build"
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -n "Release $VERSION" -b "$CHANGELOG" v$VERSION /home/circleci/project/dist/main
 
   build-windows:
     executor:
@@ -78,19 +106,53 @@ jobs:
             Expand-Archive -Path "ghr_0.17.0.zip" -DestinationPath "C:\ghr" -Force
             # Ensure ghr.exe is available.
             if (!(Test-Path "C:\ghr\ghr.exe")) {
-                $ghrPath = Get-ChildItem -Path "C:\ghr" -Filter "ghr.exe" -Recurse | Select-Object -First 1
-                if ($ghrPath) {
-                    Copy-Item -Path $ghrPath.FullName -Destination "C:\ghr\ghr.exe"
-                }
+              $ghrPath = Get-ChildItem -Path "C:\ghr" -Filter "ghr.exe" -Recurse | Select-Object -First 1
+              if ($ghrPath) {
+                Copy-Item -Path $ghrPath.FullName -Destination "C:\ghr\ghr.exe"
+              }
             }
             # Add C:\ghr to the PATH.
             $env:PATH += ";C:\ghr"
             # Query GitHub for the latest release tag.
-            $releaseData = Invoke-RestMethod -Uri "https://api.github.com/repos/$env:CIRCLE_PROJECT_USERNAME/$env:CIRCLE_PROJECT_REPONAME/releases/latest"
-            $releaseTag = $releaseData.tag_name
-            Write-Host "Latest release tag: $releaseTag"
-            # Append the Windows artifact (main.exe) to the existing release.
-            C:\ghr\ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME $releaseTag "dist\main.exe"
+            $mergeCommitMsg = git log --format=%B -n 1 $env:CIRCLE_SHA1
+
+            if ($mergeCommitMsg -match "Version: (\d+\.\d+\.\d+)") {
+              $version = $matches[1]
+            } else {
+              Write-Host "❌ ERROR: Version not found in commit message."
+              exit 1
+            }
+
+            $latestTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/$env:CIRCLE_PROJECT_USERNAME/$env:CIRCLE_PROJECT_REPONAME/releases/latest").tag_name
+            if (!$latestTag) {
+              Write-Host "⚠️ No previous release found. Skipping version check."
+              exit 0
+            }
+            $latestVersion = $latestTag -replace '^v', ''  # Remove leading 'v'
+            function Compare-Version ($v1, $v2) {
+              $v1Parts = $v1 -split '\.'
+              $v2Parts = $v2 -split '\.'
+
+              for ($i = 0; $i -lt 3; $i++) {
+                if ([int]$v1Parts[$i] -gt [int]$v2Parts[$i]) { return $true }
+                if ([int]$v1Parts[$i] -lt [int]$v2Parts[$i]) { return $false }
+              }
+              return $false
+            }
+            if (Compare-Version $version $latestVersion) {
+              Write-Host "✅ New version $version is valid (greater than $latestVersion)"
+            } else {
+              Write-Host "❌ ERROR: Version $version is not greater than latest release $latestVersion."
+              exit 1
+            }
+
+            $changelog = $mergeCommitMsg | Select-String -Pattern "(?<=Changelog:)(.|\n)*" | ForEach-Object { $_.Matches.Value }
+            if (-not $changelog) {
+              Write-Host "Error: No changelog found in commit message."
+              exit 1
+            }
+
+            C:\ghr\ghr.exe -t $env:GITHUB_TOKEN -u $env:CIRCLE_PROJECT_USERNAME -r $env:CIRCLE_PROJECT_REPONAME -n "Release $version" -b "$changelog" v$version "dist\main.exe"
 
 workflows:
   release-workflow:
