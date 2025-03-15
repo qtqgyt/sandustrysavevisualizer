@@ -17,6 +17,19 @@ class window:
         pygame.mouse.set_cursor(self._create_cursor())
         pygame.display.set_caption(title)
         self.screen = pygame.display.set_mode((self.window_width, self.window_height))
+
+        self.rows = len(self.map.world)
+        self.cols = max(len(row) for row in self.map.world)
+        self.base_tile_size = max(min(32, 1280 // self.cols, 1280 // self.rows), 1)
+        self.tile_size = int(self.base_tile_size * self.base_zoom_multiplier)
+        self.tilemap_width = self.cols * self.tile_size
+        self.tilemap_height = self.rows * self.tile_size
+
+        # Pre-create a font for HUD text
+        self.font = pygame.font.SysFont(None, 24)
+
+        self.camera_x, self.camera_y = 0, 0
+        self.scroll_speed = 10
         pass
 
     def _create_magnifying_glass_icon(self) -> pygame.Surface:
@@ -111,17 +124,33 @@ class window:
             text_y = hotbar_y + margin + 4
             screen.blit(text_surface, (text_x, text_y))
 
+    def update_map_dimensions(self):
+        print(f"Debug: Updating dimensions - Current zoom: {self.zoom_level}, Current tile size: {self.tile_size}")
+        # Ensure self.tile_size is never less than 1
+        new_tile_size = max(1, int(self.base_tile_size * self.zoom_level))
+        print(f"Debug: New tile size would be: {new_tile_size} (base_tile_size: {self.base_tile_size})")
+        if new_tile_size != self.tile_size:
+            # Show loading overlay before starting update
+            self.draw_loading_overlay(self.screen, self.font)
+
+            self.tile_size = new_tile_size
+            self.tilemap_width = self.cols * self.tile_size
+            self.tilemap_height = self.rows * self.tile_size
+            print(f"Debug: New dimensions - width: {self.tilemap_width}, height: {self.tilemap_height}")
+            # Recreate tilemap surface with new dimensions
+            tilemap_surface = pygame.Surface((self.tilemap_width, self.tilemap_height))
+            for y, row in enumerate(self.map.world):
+                for x, tile in enumerate(row):
+                    if isinstance(tile, list):
+                        tile = tile[0]
+                    tile_info = tile_colors.get(tile, default_tile) if isinstance(tile, int) else default_tile
+                    rect = pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size)
+                    pygame.draw.rect(tilemap_surface, tile_info.color, rect)
+            return True
+        return False
+
     def render(self):
-        rows = len(self.map.world)
-        cols = max(len(row) for row in self.map.world)
-        base_tile_size = max(min(32, 1280 // cols, 1280 // rows), 1)
-        tile_size = int(base_tile_size * self.base_zoom_multiplier)
-        tilemap_width = cols * tile_size
-        tilemap_height = rows * tile_size
-
-        print("Contact @ qw000erty_71712 on discord for help.")
-
-        tilemap_surface = pygame.Surface((tilemap_width, tilemap_height))
+        tilemap_surface = pygame.Surface((self.tilemap_width, self.tilemap_height))
         for y, row in enumerate(self.map.world):
             for x, tile in enumerate(row):
                 # If tile is an array, use its first element.
@@ -129,47 +158,17 @@ class window:
                     tile = tile[0]
 
                 tile_info = tile_colors.get(tile, default_tile) if isinstance(tile, int) else default_tile
-                rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
+                rect = pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size)
                 pygame.draw.rect(tilemap_surface, tile_info.color, rect)
 
-        camera_x, camera_y = 0, 0
-        scroll_speed = 10
-        clock = pygame.time.Clock()
         running = True
+        clock = pygame.time.Clock()
 
-        # Pre-create a font for HUD text
-        font = pygame.font.SysFont(None, 24)
         # Set camera to middle on start
-        camera_x = (tilemap_width - self.window_width) // 2
-        camera_y = (tilemap_height - self.window_height) // 2
+        camera_x = (self.tilemap_width - self.window_width) // 2
+        camera_y = (self.tilemap_height - self.window_height) // 2
 
-        def update_map_dimensions():
-            nonlocal tile_size, tilemap_width, tilemap_height, tilemap_surface
-            print(f"Debug: Updating dimensions - Current zoom: {self.zoom_level}, Current tile size: {tile_size}")
-            # Ensure tile_size is never less than 1
-            new_tile_size = max(1, int(base_tile_size * self.zoom_level))
-            print(f"Debug: New tile size would be: {new_tile_size} (base_tile_size: {base_tile_size})")
-            if new_tile_size != tile_size:
-                # Show loading overlay before starting update
-                self.draw_loading_overlay(self.screen, font)
-
-                tile_size = new_tile_size
-                tilemap_width = cols * tile_size
-                tilemap_height = rows * tile_size
-                print(f"Debug: New dimensions - width: {tilemap_width}, height: {tilemap_height}")
-                # Recreate tilemap surface with new dimensions
-                tilemap_surface = pygame.Surface((tilemap_width, tilemap_height))
-                for y, row in enumerate(self.map.world):
-                    for x, tile in enumerate(row):
-                        if isinstance(tile, list):
-                            tile = tile[0]
-                        tile_info = tile_colors.get(tile, default_tile) if isinstance(tile, int) else default_tile
-                        rect = pygame.Rect(x * tile_size, y * tile_size, tile_size, tile_size)
-                        pygame.draw.rect(tilemap_surface, tile_info.color, rect)
-                return True
-            return False
-
-        update_map_dimensions()
+        self.update_map_dimensions()
 
         while running:
             pygame.event.pump()
@@ -182,8 +181,8 @@ class window:
                     world_y = camera_y + mouse_y
 
                     # Store relative position before zoom
-                    rel_x = world_x / tilemap_width if tilemap_width > 0 else 0.5
-                    rel_y = world_y / tilemap_height if tilemap_height > 0 else 0.5
+                    rel_x = world_x / self.tilemap_width if self.tilemap_width > 0 else 0.5
+                    rel_y = world_y / self.tilemap_height if self.tilemap_height > 0 else 0.5
 
                     old_zoom = self.zoom_level
                     if event.key in [pygame.K_PLUS, pygame.K_KP_PLUS, pygame.K_EQUALS]:
@@ -198,27 +197,27 @@ class window:
                     # Only update if zoom changed
                     if old_zoom != self.zoom_level:
                         print(f"Debug: Zoom changed from {old_zoom} to {self.zoom_level}")
-                        if update_map_dimensions():
+                        if self.update_map_dimensions():
                             print("Debug: Map dimensions updated successfully")
                         else:
                             print("Debug: No dimension update needed")
                         # Maintain focus point
-                        new_world_x = rel_x * tilemap_width
-                        new_world_y = rel_y * tilemap_height
+                        new_world_x = rel_x * self.tilemap_width
+                        new_world_y = rel_y * self.tilemap_height
                         camera_x = int(new_world_x - mouse_x)
                         camera_y = int(new_world_y - mouse_y)
-                        camera_x = max(0, min(camera_x, tilemap_width - self.window_width))
-                        camera_y = max(0, min(camera_y, tilemap_height - self.window_height))
+                        camera_x = max(0, min(camera_x, self.tilemap_width - self.window_width))
+                        camera_y = max(0, min(camera_y, self.tilemap_height - self.window_height))
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                camera_x = max(camera_x - scroll_speed, 0)
+                camera_x = max(camera_x - self.scroll_speed, 0)
             if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                camera_x = min(camera_x + scroll_speed, tilemap_width - self.window_width)
+                camera_x = min(camera_x + self.scroll_speed, self.tilemap_width - self.window_width)
             if keys[pygame.K_UP] or keys[pygame.K_w]:
-                camera_y = max(camera_y - scroll_speed, 0)
+                camera_y = max(camera_y - self.scroll_speed, 0)
             if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                camera_y = min(camera_y + scroll_speed, tilemap_height - self.window_height)
+                camera_y = min(camera_y + self.scroll_speed, self.tilemap_height - self.window_height)
             if keys[pygame.K_ESCAPE]:
                 running = False
 
@@ -231,26 +230,29 @@ class window:
                 self.screen,
                 (0, 255, 0),
                 (self.map.player_x - camera_x, self.map.player_y - camera_y),
-                max(tile_size // 2, 5),
+                max(self.tile_size // 2, 5),
             )
             mouse_x, mouse_y = pygame.mouse.get_pos()
             world_x = camera_x + mouse_x
             world_y = camera_y + mouse_y
-            tile_x = world_x // tile_size
-            tile_y = world_y // tile_size
-            if 0 <= tile_y < rows and 0 <= tile_x < cols:
+            tile_x = world_x // self.tile_size
+            tile_y = world_y // self.tile_size
+            if 0 <= tile_y < self.rows and 0 <= tile_x < self.cols:
                 tile_id = self.map.world[tile_y][tile_x]
                 # If tile_id is an array, use its first element.
                 if isinstance(tile_id, list):
                     tile_id = tile_id[0]
                 hover_rect = pygame.Rect(
-                    tile_x * tile_size - camera_x, tile_y * tile_size - camera_y, tile_size, tile_size
+                    tile_x * self.tile_size - camera_x,
+                    tile_y * self.tile_size - camera_y,
+                    self.tile_size,
+                    self.tile_size,
                 )
                 pygame.draw.rect(self.screen, (255, 0, 0), hover_rect, 2)
                 tile_info = tile_colors.get(tile_id, default_tile) if isinstance(tile_id, int) else default_tile
-                text_surface = font.render(f"Tile: {tile_id} - {tile_info.name}", True, (255, 255, 255))
+                text_surface = self.font.render(f"Tile: {tile_id} - {tile_info.name}", True, (255, 255, 255))
                 self.screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
-            self.draw_hud(self.screen, font)  # Updated function call
+            self.draw_hud(self.screen, self.font)  # Updated function call
 
             pygame.display.flip()
             clock.tick(60)
