@@ -10,8 +10,8 @@ class window:
     def __init__(self, title: str, map: Map) -> None:
         self.map = map
         self.zoom_level = 3
-        # self.window_width, self.window_height = 800, 600
-        self.window_width, self.window_height = 1920, 1380
+        self.window_width, self.window_height = 800, 600
+        # self.window_width, self.window_height = 1920, 1380
 
         pygame.init()
 
