@@ -92,4 +92,8 @@ class Map:
             raise e
 
     def get_tile_info(self, tile) -> TileInfo:
-        return tile_colors.get(tile, default_tile) if isinstance(tile, int) else default_tile
+        if isinstance(tile, int):
+            return tile_colors.get(tile, default_tile)
+        if isinstance(tile, dict) and "element" in tile and "type" in tile["element"]:
+            return tile_colors.get(tile["element"]["type"] + 100, default_tile)
+        return default_tile
