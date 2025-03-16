@@ -22,5 +22,4 @@ def main():
 
 
 if __name__ == "__main__":
-    print("Contact @ qw000erty_71712 on discord for help.")
     main()
