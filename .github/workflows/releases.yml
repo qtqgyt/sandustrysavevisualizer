@@ -91,16 +91,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build executable
-        run: |
-          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            brew install gnu-sed
-            gsed -i "s/INSERTVERSIONHERE/${{ needs.prepare-release.outputs.version }}/g" main.py
-          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            (Get-Content main.py) -replace "INSERTVERSIONHERE", "${{ needs.prepare-release.outputs.version }}" | Set-Content main.py
-          else
-            sed -i "s/INSERTVERSIONHERE/${{ needs.prepare-release.outputs.version }}/g" main.py
-          fi
-          pyinstaller --onefile main.py
+        run: pyinstaller --onefile main.py
 
       - name: Set artifact path
         id: set_path
