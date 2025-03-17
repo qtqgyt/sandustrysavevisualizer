@@ -1,4 +1,5 @@
 #!python
+from loguru import logger
 import sys
 import tkinter as tk
 from tkinter import filedialog
@@ -6,7 +7,7 @@ from tkinter import filedialog
 from map import Map
 from window import window
 
-
+@logger.catch
 def main():
     if len(sys.argv) > 1:
         json_path = sys.argv[1]
