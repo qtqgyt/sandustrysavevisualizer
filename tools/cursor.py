@@ -64,27 +64,16 @@ class Cursor(Tool):
 
     def draw_tooltip(self, window) -> None:
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        world_x = window.camera_x + mouse_x
-        world_y = window.camera_y + mouse_y
-        tile_x = world_x // window.zoom_level
-        tile_y = world_y // window.zoom_level
-        if 0 <= tile_y < window.rows and 0 <= tile_x < window.cols:
-            tile = window.map.world[tile_y][tile_x]
-            # If tile is an array, use its first element.
-            if isinstance(tile, list):
-                tile = tile[0]
-            hover_rect = pygame.Rect(
-                tile_x * window.zoom_level - window.camera_x,
-                tile_y * window.zoom_level - window.camera_y,
-                window.zoom_level,
-                window.zoom_level,
-            )
-            pygame.draw.rect(window.screen, (255, 0, 0), hover_rect, 2)
+        x = (window.camera_x + mouse_x) // window.zoom_level
+        y = (window.camera_y + mouse_y) // window.zoom_level
+        if 0 <= y < window.rows and 0 <= x < window.cols:
+            tile = window.map.get_tile(x, y)
             tile_info = window.map.get_tile_info(tile)
             text_surface = window.font.render(str(tile_info), True, (255, 255, 255))
             window.screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
 
     def render(self, window):
+        super().render(window)
         self.draw_resources(window)
         self.draw_tooltip(window)
 
