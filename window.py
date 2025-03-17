@@ -10,11 +10,13 @@ environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 import pygame
 
 from map import Map
+from tools import ToolBelt
 
 
 class window:
     def __init__(self, title: str, map: Map) -> None:
         self.map = map
+        self.tool_belt = ToolBelt()
         self.zoom_level = config.zoom_level
         self.window_width, self.window_height = config.window_x, config.window_y
 
@@ -73,58 +75,6 @@ class window:
         self.screen.blit(loading_text, text_rect)
         pygame.display.flip()
 
-    def draw_resources(self) -> pygame.Surface:
-        gold_text = self.font.render(f"Gold: {self.map.gold}", True, (255, 215, 0))
-        fluxite_text = self.font.render(f"Fluxite: {self.map.fluxite}", True, (175, 0, 224))
-        artifacts_text = self.font.render(f"Artifacts: {self.map.artifacts}/2", True, (45, 197, 214))
-
-        background_width = max(gold_text.get_width(), fluxite_text.get_width(), artifacts_text.get_width()) + 10
-        resources_hud = pygame.Surface((background_width + 10, 100), pygame.SRCALPHA)
-        resources_hud.fill((0, 0, 0, 0))
-
-        pygame.draw.rect(resources_hud, (128, 128, 128, 128), pygame.Rect(5, 5, background_width, 90), 0, 5)
-        resources_hud.blits(
-            [
-                (gold_text, (10, 10)),
-                (fluxite_text, (10, 40)),
-                (artifacts_text, (10, 70)),
-            ]
-        )
-        return resources_hud
-
-    def draw_hotbar(self):
-        # Hotbar
-        slot_width = 60
-        margin = 10
-        hotbar_height = slot_width + (margin * 2)
-        screen_width = self.screen.get_width()
-        hotbar_y = self.screen.get_height() - hotbar_height
-
-        # Calculate actual hotbar background width to only cover slots
-        TOTAL_SLOTS = 9
-        total_width = TOTAL_SLOTS * slot_width + (TOTAL_SLOTS + 1) * margin
-        start_x = (screen_width - total_width) // 2
-
-        # Create hotbar background surface with transparency
-        hotbar_surface = pygame.Surface((total_width, hotbar_height), pygame.SRCALPHA)
-        # Draw rounded rectangle for hotbar background
-        pygame.draw.rect(
-            hotbar_surface, (50, 50, 50, 128), (0, 0, total_width, hotbar_height), border_radius=10
-        )  # Add rounded corners
-
-        # Blit hotbar background at calculated position
-        self.screen.blit(hotbar_surface, (start_x, hotbar_y))
-
-        for idx in range(TOTAL_SLOTS):
-            slot_x = start_x + margin + idx * (slot_width + margin)
-            color = (255, 215, 0) if idx == self.map.active_slot else (100, 100, 100)
-            pygame.draw.rect(self.screen, color, (slot_x, hotbar_y + margin, slot_width, slot_width), 2)
-            text_surface = self.font.render(str(idx), True, (255, 255, 255))
-            # Position text in top-left corner with small offset
-            text_x = slot_x + 4
-            text_y = hotbar_y + margin + 4
-            self.screen.blit(text_surface, (text_x, text_y))
-
     def _draw_new_tilemap_surface(self) -> None:
         # Recreate tilemap surface with new dimensions
         self.tilemap_surface = pygame.Surface((self.tilemap_width, self.tilemap_height))
@@ -157,7 +107,7 @@ class window:
             self.min_camera_y = 0
             self.max_camera_y = self.tilemap_height - self.window_height
 
-    def update_map_dimensions(self, change: int) -> bool:
+    def _update_map_dimensions(self, change: int) -> bool:
         old_zoom = self.zoom_level
         self.zoom_level = max(1, min(4, self.zoom_level + change))  # Increased zoom factor
         if old_zoom == self.zoom_level:
@@ -167,7 +117,7 @@ class window:
         self.tilemap_height = self.rows * self.zoom_level
         return True
 
-    def update_camera(self, amount: int) -> None:
+    def _update_camera(self, amount: int) -> None:
         y_offset = self.window_height // 2
         x_offset = self.window_width // 2
 
@@ -176,12 +126,12 @@ class window:
         self.camera_y = (self.camera_y + y_offset) // (old_zoom) * self.zoom_level - y_offset
         self.camera_x = (self.camera_x + x_offset) // (old_zoom) * self.zoom_level - x_offset
 
-    def process_zoom(self, amount: int):
-        if self.update_map_dimensions(amount):
+    def _process_zoom(self, amount: int):
+        if self._update_map_dimensions(amount):
             self.draw_loading_overlay()
             self._draw_new_tilemap_surface()
             self._calculate_camera_borders()
-            self.update_camera(amount)
+            self._update_camera(amount)
 
     def render(self):
         running = True
@@ -206,27 +156,16 @@ class window:
                             break
                         case pygame.K_PLUS | pygame.K_KP_PLUS | pygame.K_EQUALS:
                             logger.debug(f"Debug: Attempting to zoom in from {self.zoom_level}")
-                            self.process_zoom(1)
+                            self._process_zoom(1)
                             logger.debug(f"Debug: New zoom level: {self.zoom_level}")
                         case pygame.K_MINUS | pygame.K_KP_MINUS:
                             logger.debug(f"Debug: Attempting to zoom out from {self.zoom_level}")
-                            self.process_zoom(-1)
+                            self._process_zoom(-1)
                             logger.debug(f"Debug: New zoom level: {self.zoom_level}")
                         case _:
-                            pass
+                            self.tool_belt.process_keydown(self, event.key)
 
-            scroll_x = scroll_y = 0
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                scroll_x -= self.scroll_speed
-            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                scroll_x += self.scroll_speed
-            if keys[pygame.K_UP] or keys[pygame.K_w]:
-                scroll_y += self.scroll_speed
-            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                scroll_y -= self.scroll_speed
-            self.camera_x = max(min(self.camera_x + scroll_x, self.max_camera_x), self.min_camera_x)
-            self.camera_y = min(max(self.camera_y - scroll_y, self.max_camera_y), self.min_camera_y)
+            self.tool_belt.process_keys(self)
 
             self.screen.fill((0, 0, 0))
             self.screen.blit(
@@ -234,27 +173,8 @@ class window:
                 (0, 0),
                 area=pygame.Rect(self.camera_x, self.camera_y, self.window_width, self.window_height),
             )
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            world_x = self.camera_x + mouse_x
-            world_y = self.camera_y + mouse_y
-            tile_x = world_x // self.zoom_level
-            tile_y = world_y // self.zoom_level
-            if 0 <= tile_y < self.rows and 0 <= tile_x < self.cols:
-                tile = self.map.world[tile_y][tile_x]
-                # If tile is an array, use its first element.
-                if isinstance(tile, list):
-                    tile = tile[0]
-                hover_rect = pygame.Rect(
-                    tile_x * self.zoom_level - self.camera_x,
-                    tile_y * self.zoom_level - self.camera_y,
-                    self.zoom_level,
-                    self.zoom_level,
-                )
-                pygame.draw.rect(self.screen, (255, 0, 0), hover_rect, 2)
-                tile_info = self.map.get_tile_info(tile)
-                text_surface = self.font.render(str(tile_info), True, (255, 255, 255))
-                self.screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
-            self.screen.blit(self.draw_resources(), (0, 0))
+
+            self.tool_belt.render(self)
 
             pygame.display.flip()
             clock.tick(60)

@@ -1,4 +1,5 @@
 import json
+from pprint import pprint
 
 
 class TileInfo:
@@ -25,6 +26,8 @@ tile_colors: dict[int, TileInfo] = {
     8: TileInfo(8, (255, 128, 0), "Sealing Block", "#ff8000"),
     9: TileInfo(9, (115, 177, 67), "Grass", "#73b143"),
     10: TileInfo(10, (91, 206, 34), "Moss", "#5bce22"),
+    11: TileInfo(11, (250, 250, 2), "Solid Gold", "#ff6600"),
+    12: TileInfo(12, (139, 105, 218), "Solid Amethelis", "#ff6600"),
     13: TileInfo(13, (255, 102, 0), "Undiscovered Lava", "#ff6600"),
     14: TileInfo(14, (175, 0, 224), "Fluxite", "#af00e0"),
     15: TileInfo(15, (217, 157, 14), "Block", "#d99d0e"),
@@ -92,8 +95,11 @@ class Map:
             raise e
 
     def get_tile_info(self, tile) -> TileInfo:
+        tileInfo = default_tile
         if isinstance(tile, int):
-            return tile_colors.get(tile, default_tile)
+            tileInfo = tile_colors.get(tile, default_tile)
         if isinstance(tile, dict) and "element" in tile and "type" in tile["element"]:
-            return tile_colors.get(tile["element"]["type"] + 100, default_tile)
-        return default_tile
+            tileInfo = tile_colors.get(tile["element"]["type"] + 100, default_tile)
+        if tileInfo == default_tile:
+            pprint(tile)
+        return tileInfo
