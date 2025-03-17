@@ -1,7 +1,5 @@
 import pygame
 
-from map import Map
-
 
 class Tool:
     def process_keys(self, window) -> None:
@@ -19,8 +17,22 @@ class Tool:
         window.camera_y = min(max(window.camera_y - scroll_y, window.max_camera_y), window.min_camera_y)
 
     def process_keydown(self, window, key) -> None: ...
-    def render(self, window) -> None: ...
+    def render(self, window) -> None:
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        x = (window.camera_x + mouse_x) // window.zoom_level
+        y = (window.camera_y + mouse_y) // window.zoom_level
+        if 0 <= y < window.rows and 0 <= x < window.cols:
+            hover_rect = pygame.Rect(
+                x * window.zoom_level - window.camera_x,
+                y * window.zoom_level - window.camera_y,
+                window.zoom_level,
+                window.zoom_level,
+            )
+            pygame.draw.rect(window.screen, (255, 0, 0), hover_rect, 2)
+        tool_name = window.font.render(str(self), True, (255, 255, 255), (50, 50, 50, 50))
+        window.screen.blit(tool_name, (10, window.window_height - tool_name.get_height() - 10))
+
     def process_mouse(self, window) -> None: ...
-    def process_click(self, map: Map, cursor: tuple[int, int]) -> tuple[bool, dict | None]: ...
+    def process_mouse_down(self, window, event) -> tuple[bool, dict | None]: ...
     def __str__(self) -> str:
         return "Unknown"
