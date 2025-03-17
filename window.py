@@ -144,26 +144,29 @@ class window:
             pygame.event.pump()
 
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                elif event.type == pygame.VIDEORESIZE:
-                    self.window_width, self.window_height = event.size
-                    self._calculate_camera_borders()
-                elif event.type == pygame.KEYDOWN:
-                    match event.key:
-                        case pygame.K_ESCAPE | pygame.K_q:
-                            running = False
-                            break
-                        case pygame.K_PLUS | pygame.K_KP_PLUS | pygame.K_EQUALS:
-                            logger.debug(f"Debug: Attempting to zoom in from {self.zoom_level}")
-                            self._process_zoom(1)
-                            logger.debug(f"Debug: New zoom level: {self.zoom_level}")
-                        case pygame.K_MINUS | pygame.K_KP_MINUS:
-                            logger.debug(f"Debug: Attempting to zoom out from {self.zoom_level}")
-                            self._process_zoom(-1)
-                            logger.debug(f"Debug: New zoom level: {self.zoom_level}")
-                        case _:
-                            self.tool_belt.process_keydown(self, event.key)
+                match event.type:
+                    case pygame.QUIT:
+                        running = False
+                    case pygame.VIDEORESIZE:
+                        self.window_width, self.window_height = event.size
+                        self._calculate_camera_borders()
+                    case pygame.KEYDOWN:
+                        match event.key:
+                            case pygame.K_ESCAPE | pygame.K_q:
+                                running = False
+                                break
+                            case pygame.K_PLUS | pygame.K_KP_PLUS | pygame.K_EQUALS:
+                                logger.debug(f"Debug: Attempting to zoom in from {self.zoom_level}")
+                                self._process_zoom(1)
+                                logger.debug(f"Debug: New zoom level: {self.zoom_level}")
+                            case pygame.K_MINUS | pygame.K_KP_MINUS:
+                                logger.debug(f"Debug: Attempting to zoom out from {self.zoom_level}")
+                                self._process_zoom(-1)
+                                logger.debug(f"Debug: New zoom level: {self.zoom_level}")
+                            case _:
+                                self.tool_belt.process_keydown(self, event.key)
+                    case _:
+                        self.tool_belt.handle_event(self, event)
 
             self.tool_belt.process_keys(self)
 
