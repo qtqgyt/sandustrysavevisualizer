@@ -94,6 +94,12 @@ class Map:
         except Exception as e:
             raise e
 
+    def get_tile(self, x: int, y: int):
+        return self.world[y][x]
+
+    def set_tile(self, x: int, y: int, tile) -> None:
+        self.world[y][x] = tile
+
     def get_tile_info(self, tile) -> TileInfo:
         tileInfo = default_tile
         if isinstance(tile, int):
