@@ -4,7 +4,8 @@ from config import config
 from loguru import logger
 
 from os import environ
-environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+
+environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
 import pygame
 
@@ -124,11 +125,7 @@ class window:
             text_y = hotbar_y + margin + 4
             self.screen.blit(text_surface, (text_x, text_y))
 
-    def draw_new_tilemap(self) -> None:
-        self.draw_loading_overlay()
-        self.tilemap_width = self.cols * self.zoom_level
-        self.tilemap_height = self.rows * self.zoom_level
-        logger.debug(f"New dimensions - width: {self.tilemap_width}, height: {self.tilemap_height}")
+    def _draw_new_tilemap_surface(self) -> None:
         # Recreate tilemap surface with new dimensions
         self.tilemap_surface = pygame.Surface((self.tilemap_width, self.tilemap_height))
         for y, row in enumerate(self.map.world):
@@ -160,39 +157,41 @@ class window:
             self.min_camera_y = 0
             self.max_camera_y = self.tilemap_height - self.window_height
 
-    def update_map_dimensions(self, change: int) -> None:
+    def update_map_dimensions(self, change: int) -> bool:
         old_zoom = self.zoom_level
         self.zoom_level = max(1, min(4, self.zoom_level + change))  # Increased zoom factor
         if old_zoom == self.zoom_level:
-            return
+            return False
         logger.debug(f"Updating dimensions - Current zoom: {self.zoom_level}")
+        self.tilemap_width = self.cols * self.zoom_level
+        self.tilemap_height = self.rows * self.zoom_level
+        return True
 
-        self.draw_new_tilemap()
+    def update_camera(self, amount: int) -> None:
+        y_offset = self.window_height // 2
+        x_offset = self.window_width // 2
 
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        world_x = self.camera_x + mouse_x
-        world_y = self.camera_y + mouse_y
-        rel_x = world_x / self.tilemap_width if self.tilemap_width > 0 else 0.5
-        rel_y = world_y / self.tilemap_height if self.tilemap_height > 0 else 0.5
-        new_world_x = rel_x * self.tilemap_width
-        new_world_y = rel_y * self.tilemap_height
-        self.camera_x = int(new_world_x - mouse_x)
-        self.camera_y = int(new_world_y - mouse_y)
-        self._calculate_camera_borders()
+        old_zoom = self.zoom_level - amount
+
+        self.camera_y = (self.camera_y + y_offset) // (old_zoom) * self.zoom_level - y_offset
+        self.camera_x = (self.camera_x + x_offset) // (old_zoom) * self.zoom_level - x_offset
+
+    def process_zoom(self, amount: int):
+        if self.update_map_dimensions(amount):
+            self.draw_loading_overlay()
+            self._draw_new_tilemap_surface()
+            self._calculate_camera_borders()
+            self.update_camera(amount)
 
     def render(self):
         running = True
         clock = pygame.time.Clock()
 
-        self.draw_new_tilemap()
+        self.draw_loading_overlay()
+        self._draw_new_tilemap_surface()
 
         while running:
             pygame.event.pump()
-
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
-                running = False
-                continue
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -201,16 +200,23 @@ class window:
                     self.window_width, self.window_height = event.size
                     self._calculate_camera_borders()
                 elif event.type == pygame.KEYDOWN:
-                    if event.key in [pygame.K_PLUS, pygame.K_KP_PLUS, pygame.K_EQUALS]:
-                        logger.debug(f"Attempting to zoom in from {self.zoom_level}")
-                        self.update_map_dimensions(1)
-                        logger.debug(f"New zoom level: {self.zoom_level}")
-                    elif event.key in [pygame.K_MINUS, pygame.K_KP_MINUS]:
-                        logger.debug(f"Attempting to zoom out from {self.zoom_level}")
-                        self.update_map_dimensions(-1)
-                        logger.debug(f"New zoom level: {self.zoom_level}")
+                    match event.key:
+                        case pygame.K_ESCAPE | pygame.K_q:
+                            running = False
+                            break
+                        case pygame.K_PLUS | pygame.K_KP_PLUS | pygame.K_EQUALS:
+                            logger.debug(f"Debug: Attempting to zoom in from {self.zoom_level}")
+                            self.process_zoom(1)
+                            logger.debug(f"Debug: New zoom level: {self.zoom_level}")
+                        case pygame.K_MINUS | pygame.K_KP_MINUS:
+                            logger.debug(f"Debug: Attempting to zoom out from {self.zoom_level}")
+                            self.process_zoom(-1)
+                            logger.debug(f"Debug: New zoom level: {self.zoom_level}")
+                        case _:
+                            pass
 
             scroll_x = scroll_y = 0
+            keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:
                 scroll_x -= self.scroll_speed
             if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
