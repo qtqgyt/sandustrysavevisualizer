@@ -87,3 +87,6 @@ class Cursor(Tool):
     def render(self, window):
         self.draw_resources(window)
         self.draw_tooltip(window)
+
+    def __str__(self) -> str:
+        return "Cursor"
