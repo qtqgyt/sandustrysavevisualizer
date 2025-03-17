@@ -13,8 +13,8 @@ class window:
     def __init__(self, title: str, map: Map) -> None:
         self.map = map
         self.zoom_level = 3
-        # self.window_width, self.window_height = 800, 600
-        self.window_width, self.window_height = 1920, 1380
+        self.window_width, self.window_height = 800, 600
+        # self.window_width, self.window_height = 1920, 1380
 
         pygame.init()
 
@@ -27,7 +27,7 @@ class window:
         pygame.mouse.set_cursor(cursor)
 
         pygame.display.set_caption(title)
-        self.screen = pygame.display.set_mode((self.window_width, self.window_height))
+        self.screen = pygame.display.set_mode((self.window_width, self.window_height), pygame.RESIZABLE)
 
         self.rows = len(self.map.world)
         self.cols = max(len(row) for row in self.map.world)
@@ -196,6 +196,9 @@ class window:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                elif event.type == pygame.VIDEORESIZE:
+                    self.window_width, self.window_height = event.size
+                    self._calculate_camera_borders()
                 elif event.type == pygame.KEYDOWN:
                     if event.key in [pygame.K_PLUS, pygame.K_KP_PLUS, pygame.K_EQUALS]:
                         print(f"Debug: Attempting to zoom in from {self.zoom_level}")
