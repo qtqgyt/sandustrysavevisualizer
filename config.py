@@ -7,7 +7,7 @@ class Config:
     CONFIG_FILE = "config.json"
 
     def __init__(self):
-        self.configValue = "default"
+        self.zoom_level = "default"
         self.load_config()
         atexit.register(self.save_config)
 
