@@ -70,18 +70,19 @@ tile_colors: dict[int, TileInfo] = {
 
 class Map:
     def __init__(self, path) -> None:
+        self.path = path
         try:
             with open(path, "r", encoding="utf-8", errors="replace") as file:
                 contents = file.read()
-            objects = [json.loads(s.strip()) for s in contents.splitlines()]
+            self.data = [json.loads(s.strip()) for s in contents.splitlines()]
             # Extract gold, fluxite, and artifacts from the first JSON segment at path resources.gold, fluxite, artifacts
-            resources = objects[0].get("resources", {}) if objects else {}
+            resources = self.data[0].get("resources", {}) if self.data else {}
             self.gold = resources.get("gold", 0)
             self.fluxite = resources.get("fluxite", 0)
             self.artifacts = resources.get("artifacts", 0)
 
             found = False
-            for obj in objects:
+            for obj in self.data:
                 if "world" in obj and "matrix" in obj["world"]:
                     found = True
                     self.world = obj["world"]["matrix"]
@@ -90,7 +91,7 @@ class Map:
                 raise RuntimeError("Could not find world.matrix in save file.")
             if not (isinstance(self.world, list) and all(isinstance(row, list) for row in self.world)):
                 raise RuntimeError("world.matrix is not a valid tilemap.")
-            player_data = objects[1].get("player", {}) if len(objects) > 1 else {}
+            player_data = self.data[1].get("player", {}) if len(self.data) > 1 else {}
             self.player_x = player_data.get("x", 0) / 4
             self.player_y = player_data.get("y", 0) / 4
             self.active_slot = player_data.get("activeslotindex", 0)
