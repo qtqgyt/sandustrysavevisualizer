@@ -168,11 +168,11 @@ class window:
                                 self._process_zoom(-1)
                                 logger.debug(f"Debug: New zoom level: {self.zoom_level}")
                             case _:
-                                self.tool_belt.process_keydown(self, event.key)
+                                self.tool_belt.handle_event(self, event)
                     case _:
                         self.tool_belt.handle_event(self, event)
 
-            self.tool_belt.process_keys(self)
+            self.tool_belt.process(self)
 
             self.screen.fill((0, 0, 0))
             self.screen.blit(
