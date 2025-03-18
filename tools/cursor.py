@@ -7,9 +7,6 @@ class Cursor(Tool):
     def __init__(self) -> None:
         super().__init__()
 
-    def process_keydown(self, window, key):
-        pass
-
     def draw_resources(self, window) -> None:
         gold_text = window.font.render(f"Gold: {window.map.gold}", True, (255, 215, 0))
         fluxite_text = window.font.render(f"Fluxite: {window.map.fluxite}", True, (175, 0, 224))
@@ -69,7 +66,7 @@ class Cursor(Tool):
         if 0 <= y < window.rows and 0 <= x < window.cols:
             tile = window.map.get_tile(x, y)
             tile_info = window.map.get_tile_info(tile)
-            text_surface = window.font.render(str(tile_info), True, (255, 255, 255))
+            text_surface = window.font.render(f"({x}, {y})" + str(tile_info), True, (255, 255, 255))
             window.screen.blit(text_surface, (mouse_x + 10, mouse_y - text_surface.get_height() + 10))
 
     def render(self, window):
