@@ -104,6 +104,9 @@ class Map:
     def set_tile(self, x: int, y: int, tile) -> None:
         self.world[y][x] = tile
 
+    def get_tile_info_at(self, x: int, y: int) -> TileInfo:
+        return self.get_tile_info(self.world[y][x])
+
     def get_tile_info(self, tile) -> TileInfo:
         tileInfo = default_tile
         if isinstance(tile, int):
@@ -113,3 +116,8 @@ class Map:
         if tileInfo == default_tile:
             pprint(tile)
         return tileInfo
+
+    def save(self):
+        with open(self.path, "w", encoding="utf-8", errors="replace") as file:
+            for obj in self.data:
+                file.write(json.dumps(obj) + "\n")
