@@ -1,5 +1,6 @@
 import json
 import os
+import loguru as logger
 
 class History:
     def __init__(self):
@@ -26,5 +27,5 @@ class History:
                 with open(self.backup_file, 'r') as f:
                     self.history = json.load(f)
         except Exception as e:
-            print(f"Failed to restore history: {e}")
+            logger.error(f"Failed to restore history: {e}")
             self.history = []
