@@ -75,11 +75,10 @@ class window:
         self.screen.blit(loading_text, text_rect)
         pygame.display.flip()
 
-    def _draw_new_tilemap_surface(self) -> None:
-        # Recreate tilemap surface with new dimensions
-        self.tilemap_surface = pygame.Surface((self.tilemap_width, self.tilemap_height))
-        for y, row in enumerate(self.map.world):
-            for x, tile in enumerate(row):
+    def _update_tilemap_surface(self, start_x: int, start_y: int, width: int, height: int) -> None:
+        for y in range(start_y, start_y + height):  # enumerate(self.map.world):
+            for x in range(start_x, start_x + width):  # enumerate(row):
+                tile = self.map.world[y][x]
                 if isinstance(tile, list):
                     tile = tile[0]
                 tile_info = self.map.get_tile_info(tile)
@@ -92,6 +91,11 @@ class window:
             (self.map.player_x * self.zoom_level, self.map.player_y * self.zoom_level),
             max(self.zoom_level // 2, 5),
         )
+
+    def _draw_new_tilemap_surface(self) -> None:
+        # Recreate tilemap surface with new dimensions
+        self.tilemap_surface = pygame.Surface((self.tilemap_width, self.tilemap_height))
+        self._update_tilemap_surface(0, 0, self.cols, self.rows)
 
     def _calculate_camera_borders(self) -> None:
         if 0 < self.tilemap_width - self.window_width:
