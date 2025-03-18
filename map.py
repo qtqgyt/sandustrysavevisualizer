@@ -9,6 +9,9 @@ class TileInfo:
         self.name = name
         self.hex_code = hex_code
 
+    def is_particle(self):
+        return self.id > 100
+
     def __str__(self) -> str:
         return f"Tile: {self.id} - {self.name}"
 
