@@ -11,7 +11,7 @@ class window:
         self.map = map
         self.zoom_level = 1
         self.window_width, self.window_height = 800, 600
-        # self.window_width, self.window_height = 1920, 1380
+        # self.window_width, self.window_height = 1920, 1280
 
         pygame.init()
 
