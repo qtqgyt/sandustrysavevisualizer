@@ -17,7 +17,7 @@ def main():
         json_path = filedialog.askopenfilename(title="Select save file", filetypes=[("Save Files", "*.save")])
         root.destroy()
     if not json_path:
-        print("No file selected.")
+        logger.info("No file selected.")
         return
     window("Sandustry Save Visualizer", Map(json_path)).render()
 

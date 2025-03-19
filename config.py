@@ -7,7 +7,6 @@ class Config:
     CONFIG_FILE = "config.json"
 
     def __init__(self):
-        self.zoom_level = "default"
         self.load_config()
         atexit.register(self.save_config)
 
@@ -25,6 +24,6 @@ class Config:
             with open(self.CONFIG_FILE, 'w') as f:
                 json.dump(self.__dict__, f, indent=4)
         except Exception as e:
-            print(f"Error saving config: {e}")
+            logger.error(f"Error saving config: {e}")
 
 config = Config()
