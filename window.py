@@ -1,17 +1,21 @@
 import math
 import sys
+from config import config
+from loguru import logger
+
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 
 import pygame
 
-from map import Map, default_tile, tile_colors
-
+from map import Map
 
 class window:
     def __init__(self, title: str, map: Map) -> None:
-        self.map = map
-        self.zoom_level = 1
-        self.window_width, self.window_height = 800, 600
-        # self.window_width, self.window_height = 1920, 1280
+        logger.remove()
+        logger.add(sys.stderr, format="{time} {level} {message}", level=config.log_level)
+        self.zoom_level = config.zoom_level
+        self.window_width, self.window_height = config.window_x, config.window_y
 
         pygame.init()
 
@@ -24,7 +28,7 @@ class window:
         pygame.mouse.set_cursor(cursor)
 
         pygame.display.set_caption(title)
-        self.screen = pygame.display.set_mode((self.window_width, self.window_height))
+        self.screen = pygame.display.set_mode((self.window_width, self.window_height), pygame.RESIZABLE)
 
         self.rows = len(self.map.world)
         self.cols = max(len(row) for row in self.map.world)
@@ -124,14 +128,14 @@ class window:
         self.draw_loading_overlay()
         self.tilemap_width = self.cols * self.zoom_level
         self.tilemap_height = self.rows * self.zoom_level
-        print(f"Debug: New dimensions - width: {self.tilemap_width}, height: {self.tilemap_height}")
+        logger.debug(f"New dimensions - width: {self.tilemap_width}, height: {self.tilemap_height}")
         # Recreate tilemap surface with new dimensions
         self.tilemap_surface = pygame.Surface((self.tilemap_width, self.tilemap_height))
         for y, row in enumerate(self.map.world):
             for x, tile in enumerate(row):
                 if isinstance(tile, list):
                     tile = tile[0]
-                tile_info = tile_colors.get(tile, default_tile) if isinstance(tile, int) else default_tile
+                tile_info = self.map.get_tile_info(tile)
                 rect = pygame.Rect(x * self.zoom_level, y * self.zoom_level, self.zoom_level, self.zoom_level)
                 pygame.draw.rect(self.tilemap_surface, tile_info.color, rect)
         # Draw player marker: green circle indicating player's position
@@ -161,7 +165,7 @@ class window:
         self.zoom_level = max(1, min(4, self.zoom_level + change))  # Increased zoom factor
         if old_zoom == self.zoom_level:
             return
-        print(f"Debug: Updating dimensions - Current zoom: {self.zoom_level}")
+        logger.debug(f"Updating dimensions - Current zoom: {self.zoom_level}")
 
         self.draw_new_tilemap()
 
@@ -193,15 +197,18 @@ class window:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                elif event.type == pygame.VIDEORESIZE:
+                    self.window_width, self.window_height = event.size
+                    self._calculate_camera_borders()
                 elif event.type == pygame.KEYDOWN:
                     if event.key in [pygame.K_PLUS, pygame.K_KP_PLUS, pygame.K_EQUALS]:
-                        print(f"Debug: Attempting to zoom in from {self.zoom_level}")
+                        logger.debug(f"Attempting to zoom in from {self.zoom_level}")
                         self.update_map_dimensions(1)
-                        print(f"Debug: New zoom level: {self.zoom_level}")
+                        logger.debug(f"New zoom level: {self.zoom_level}")
                     elif event.key in [pygame.K_MINUS, pygame.K_KP_MINUS]:
-                        print(f"Debug: Attempting to zoom out from {self.zoom_level}")
+                        logger.debug(f"Attempting to zoom out from {self.zoom_level}")
                         self.update_map_dimensions(-1)
-                        print(f"Debug: New zoom level: {self.zoom_level}")
+                        logger.debug(f"New zoom level: {self.zoom_level}")
 
             scroll_x = scroll_y = 0
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:

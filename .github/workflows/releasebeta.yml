@@ -1,16 +1,15 @@
-name: Build Release
+name: Build Release Beta
 
 on:
   push:
     branches:
-      - main
+      - prerelease
 
 jobs:
   prepare-release:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.extract.outputs.version }}
-      changelog: ${{ steps.extract.outputs.changelog }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,53 +21,14 @@ jobs:
         shell: bash
         run: |
           # Get the commit message from the merge commit
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Commit message: $COMMIT_MSG"
-
-          # Ensure commit contains 'Release' keyword
-          if [[ "$COMMIT_MSG" != *"Release"* ]]; then
-            echo "No Release keyword found. Exiting."
-            exit 78
-          fi
-
-          # Extract version following "Release " (e.g., "Release 1.2.3")
-          VERSION=$(echo "$COMMIT_MSG" | grep -oP '(?<=Release )\d+\.\d+\.\d+')
-          if [ -z "$VERSION" ]; then
-            echo "No valid version found in commit message."
-            exit 1
-          fi
-
-          # Validate version format (X.Y.Z)
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid version format. Expected X.Y.Z"
-            exit 1
-          fi
-
-          # Extract changelog from commit (lines after "Changelog:")
-          CHANGELOG=$(echo "$COMMIT_MSG" | sed -n '/Changelog:/,$p' | sed '1d')
-          if [ -z "$CHANGELOG" ]; then
-            echo "No changelog found in commit message. Please add a changelog and try again."
-            exit 1
-          fi
+          VERSION=$(git rev-parse --short=4 $GITHUB_SHA)
+          echo "Version: $VERSION"
 
           echo "Finished!"
 
-          # Get latest release version from GitHub API
-          LATEST=$(curl -s https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest | jq -r .tag_name)
-          if [ "$LATEST" != "null" ] && [ -n "$LATEST" ]; then
-            LATEST_VERSION=${LATEST#v}
-            # Compare versions: check that $VERSION is greater than $LATEST_VERSION
-            if ! printf "%s\n%s" "$LATEST_VERSION" "$VERSION" | sort -V -C; then
-              echo "Version $VERSION is not greater than the latest release $LATEST_VERSION."
-              exit 1
-            fi
-          fi
-
           echo "Version: $VERSION"
-          echo "Changelog: $CHANGELOG"
 
           echo "::set-output name=version::$VERSION"
-          echo "::set-output name=changelog::$CHANGELOG"
 
   build:
     needs: prepare-release
@@ -91,7 +51,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build executable
-        run: pyinstaller main.py -F -n "Sandustry Save Viewer/Editor" --disable-windowed-traceback -i image.ico
+        run: pyinstaller main.py -F -i image.ico
 
       - name: Set artifact path
         id: set_path
@@ -122,9 +82,9 @@ jobs:
         id: create_release
         uses: ncipollo/release-action@v1
         with:
-          tag: v${{ needs.prepare-release.outputs.version }}
-          name: Release ${{ needs.prepare-release.outputs.version }}
-          body: ${{ needs.prepare-release.outputs.changelog }}
+          tag: b${{ needs.prepare-release.outputs.version }}
+          name: Beta ${{ needs.prepare-release.outputs.version }}
+          prerelease: true
 
       - name: Upload Linux Executable
         if: ${{ always() }}
