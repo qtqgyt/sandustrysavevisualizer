@@ -10,7 +10,6 @@ import pygame
 
 from map import Map
 
-
 class window:
     def __init__(self, title: str, map: Map) -> None:
         logger.remove()
