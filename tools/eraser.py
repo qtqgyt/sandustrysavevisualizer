@@ -1,3 +1,4 @@
+from asyncio.subprocess import Process
 from math import ceil, floor
 from loguru import logger
 import pygame
@@ -10,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from window import window
 
-MAX_SIZE = 10
+MAX_SIZE = 50
 
 SQUARE = 1
 CIRCLE = 2
@@ -42,8 +43,16 @@ class Eraser(Tool):
         match event.type:
             case pygame.MOUSEBUTTONDOWN:
                 return self.process_mouse_down(window, event)
+            case pygame.MOUSEMOTION:
+                return self.process_mouse_move(window, event)
             case _:
                 return (False, {})
+
+    def process_mouse_move(self, window: "window", event: Event) -> tuple[bool, dict]:
+        if event.buttons[0]:
+            event.button = 1
+            return self.process_mouse_down(window, event)
+        return (False, {})
 
     def process_mouse_down(self, window: "window", event: Event) -> tuple[bool, dict]:
         if event.button == 4:
@@ -54,18 +63,17 @@ class Eraser(Tool):
             if self.size_inc > 0:
                 self.size_inc -= 1
             return (False, {})
+        if not event.button == 1:
+            return (False, {})
         mouse_x, mouse_y = pygame.mouse.get_pos()
         x = (window.camera_x + mouse_x) // window.zoom_level - self.size_inc // 2
         y = (window.camera_y + mouse_y) // window.zoom_level - self.size_inc // 2
         changed = False
         old = [[0] * (self.size_inc + 1)] * (self.size_inc + 1)
         x_pos = 0
-        logger.debug(f"({x}, {y}) - max ({window.cols}, {window.rows})")
-        logger.debug(f"size: {self.size_inc}")
         for c in range(max(0, x), min(window.cols - 1, x + (self.size_inc + 1))):
             y_pos = 0
             for r in range(max(0, y), min(window.rows - 1, y + (self.size_inc + 1))):
-                logger.debug(f"({c}, {r}) - max ({window.cols}, {window.rows})")
                 tile_info = window.map.get_tile_info_at(c, r)
                 if tile_info.is_particle():
                     old[x_pos][y_pos] = tile_info.id
