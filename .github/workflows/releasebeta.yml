@@ -51,7 +51,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build executable
-        run: python3 build.py
+        run: pyinstaller main.py -F -i image.ico
 
       - name: Set artifact path
         id: set_path
