@@ -91,7 +91,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build executable
-        run: pyinstaller main.py -F -n "Sandustry Save Viewer/Editor" --disable-windowed-traceback -i image.ico
+        run: pyinstaller main.py -F -i image.ico
 
       - name: Set artifact path
         id: set_path
