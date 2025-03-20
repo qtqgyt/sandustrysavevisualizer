@@ -171,3 +171,5 @@ cython_debug/
 
 # Game save file
 *.save
+
+history.json.bak
