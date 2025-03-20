@@ -1,11 +1,15 @@
 #!python
 from loguru import logger
+from config import config
 import sys
 import tkinter as tk
 from tkinter import filedialog
 
 from map import Map
 from window import window
+
+logger.remove()
+logger.add(sys.stderr, format="{time} {level} {message}", level=config.log_level)
 
 @logger.catch
 def main():
