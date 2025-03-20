@@ -2,11 +2,7 @@ import json
 import atexit
 import os
 from loguru import logger
-from config import config
 import sys
-
-logger.remove()
-logger.add(sys.stderr, format="{time} {level} {message}", level=config.log_level)
 
 class Config:
     CONFIG_FILE = "config.json"
@@ -16,6 +12,8 @@ class Config:
         self.window_x = 800
         self.window_y = 600
         self.log_level = "INFO"
+        logger.remove()
+        logger.add(sys.stderr, format="{time} {level} {message}", level=self.log_level)
         self.load_config()
         atexit.register(self.save_config)
 
