@@ -12,6 +12,8 @@ import pygame
 from map import Map
 from tools import ToolBelt
 
+MAX_ZOOM = 8
+
 
 class window:
     def __init__(self, title: str, map: Map) -> None:
@@ -113,7 +115,7 @@ class window:
 
     def _update_map_dimensions(self, change: int) -> bool:
         old_zoom = self.zoom_level
-        self.zoom_level = max(1, min(4, self.zoom_level + change))  # Increased zoom factor
+        self.zoom_level = max(1, min(MAX_ZOOM, self.zoom_level + change))  # Increased zoom factor
         if old_zoom == self.zoom_level:
             return False
         logger.debug(f"Updating dimensions - Current zoom: {self.zoom_level}")
