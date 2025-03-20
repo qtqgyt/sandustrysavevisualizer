@@ -78,8 +78,8 @@ class window:
         pygame.display.flip()
 
     def _update_tilemap_surface(self, start_x: int, start_y: int, width: int, height: int) -> None:
-        for y in range(start_y, start_y + height):  # enumerate(self.map.world):
-            for x in range(start_x, start_x + width):  # enumerate(row):
+        for y in range(max(0, start_y), min(self.rows, start_y + height)):
+            for x in range(max(0, start_x), min(self.cols, start_x + width)):
                 tile = self.map.world[y][x]
                 if isinstance(tile, list):
                     tile = tile[0]
