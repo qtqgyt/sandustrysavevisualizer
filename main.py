@@ -8,9 +8,6 @@ from tkinter import filedialog
 from map import Map
 from window import window
 
-logger.remove()
-logger.add(sys.stderr, format="{time} {level} {message}", level=config.log_level)
-
 @logger.catch
 def main():
     if len(sys.argv) > 1:
@@ -27,4 +24,6 @@ def main():
 
 
 if __name__ == "__main__":
+    logger.remove()
+    logger.add(sys.stderr, level=config.log_level)
     main()

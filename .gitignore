@@ -173,3 +173,4 @@ cython_debug/
 *.save
 
 history.json.bak
+config.json

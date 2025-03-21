@@ -12,8 +12,6 @@ from map import Map
 
 class window:
     def __init__(self, title: str, map: Map) -> None:
-        logger.remove()
-        logger.add(sys.stderr, format="{time} {level} {message}", level=config.log_level)
         self.map = map
         self.zoom_level = config.zoom_level
         self.window_width, self.window_height = config.window_x, config.window_y
