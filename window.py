@@ -37,7 +37,7 @@ class window:
         # Pre-create a font for HUD text
         self.font = pygame.font.SysFont(None, 24)
 
-        self.scroll_speed = 10
+        self.scroll_speed = config.scroll_speed
         self.camera_x = (self.tilemap_width - self.window_width) // 2
         self.camera_y = (self.tilemap_height - self.window_height) // 2
         self._calculate_camera_borders()

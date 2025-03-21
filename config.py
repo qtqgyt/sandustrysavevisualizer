@@ -8,6 +8,7 @@ class Config:
 
     def __init__(self):
         self.zoom_level = 1
+        self.scroll_speed = 10
         self.window_x = 800
         self.window_y = 600
         self.log_level = "INFO"
